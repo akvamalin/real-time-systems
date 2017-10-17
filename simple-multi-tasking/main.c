@@ -35,10 +35,6 @@ OS_STK initialTaskStack[TASK_STACK_SIZE];
 int tasksData[N_TASKS_AMOUNT];
 byte freePrio = TASK_HIGH_PRIO + 1;
 
-// 1. why other tasks are not getting called without tick() call
-// do they not get any chance?
-// 2. what if a task body is empty - got multiple suspend resume thread errors
-
 void uiBarTask(void* data){
     int number = *((int*)data);
     char msg[BUFFER];
@@ -77,10 +73,6 @@ void statsTask(void* data){
     char s[BUFFER];
     print(STATS_POS_X, STATS_POS_Y, (char*) data);
     int tab = strlen((char*)data);
-    // sets delay(1)
-    // idle counter is running  to OS_IDLE_CTR_MAX
-    // ??? WHERE TO CALL OSStatInit ???
-    OSStatInit();
     while(TRUE){
         sprintf(s, "%d tasks, %d CPU, %d switches", OSTaskCtr, OSCPUUsage, OSCtxSwCtr);
         print(STATS_POS_X + tab, STATS_POS_Y, s);
@@ -97,23 +89,21 @@ void initialTask(void* data){
     
     char keyBuffer[INT_SIZE];
     char msg[] = "Last key pressed: ";
-    int normalKey;
     int tab;
     INT16S key;
 
-    // TODO: add error handling
+    OSStatInit();
+
     // INFO: Each priority value is only once given
     int i = 0;
     char buf[6];
     for (i = 0; i < N_TASKS_AMOUNT; i++) {
-        // sprintf(buf, "%d", i);
-        // print(i, 5, buf);                       
         tasksData[i] = i;                        
-        OSTaskCreate(uiBarTask, (void *)&tasksData[i], (void *)&tasksStack[i][TASK_STACK_SIZE - 1], TASK_HIGH_PRIO + i);
+        OSTaskCreate(uiBarTask, (void *)&tasksData[i], (void *)&tasksStack[i][TASK_STACK_SIZE - 1], freePrio + i);
     }
     
-    OSTaskCreate(clockTask, (void*)"Time:", (void*)&otherTasks[0][TASK_STACK_SIZE - 1], TASK_HIGH_PRIO + i);
-    OSTaskCreate(statsTask, (void*)"Statistics:", (void*)&otherTasks[1][TASK_STACK_SIZE - 1], TASK_HIGH_PRIO + i + 1);
+    OSTaskCreate(clockTask, (void*)"Time:", (void*)&otherTasks[0][TASK_STACK_SIZE - 1], freePrio + i);
+    OSTaskCreate(statsTask, (void*)"Statistics:", (void*)&otherTasks[1][TASK_STACK_SIZE - 1], freePrio + 1 + i);
     
     print(0, INPUT_POS_Y, msg);
     while(1){
