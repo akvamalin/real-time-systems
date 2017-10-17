@@ -8,7 +8,7 @@
 #define UBYTE INT8U
 #define TASK_HIGH_PRIO 4
 #define TASK_STACK_SIZE 512
-#define TASKS_AMOUNT 10
+#define N_TASKS_AMOUNT 10
 #define KEY_ESC 0x1B
 
 #define BUFFER 100
@@ -29,9 +29,10 @@
 #define print(x, y, msg) PC_DispStr(x, y, msg, DEFAULT_COLOUR)
 #define EMPTY_STRING "                                                                    "
 
-OS_STK tasksStack[TASKS_AMOUNT][TASK_STACK_SIZE];
+OS_STK tasksStack[N_TASKS_AMOUNT][TASK_STACK_SIZE];
+OS_STK otherTasks[2][TASK_STACK_SIZE];
 OS_STK initialTaskStack[TASK_STACK_SIZE];
-int tasksData[TASKS_AMOUNT];
+int tasksData[N_TASKS_AMOUNT];
 byte freePrio = TASK_HIGH_PRIO + 1;
 
 // 1. why other tasks are not getting called without tick() call
@@ -56,7 +57,7 @@ void uiBarTask(void* data){
             step *= -1;
         }
         counter += step;
-        tick(number);
+        tick(number + 2);
     }
 }
 
@@ -100,17 +101,19 @@ void initialTask(void* data){
     int tab;
     INT16S key;
 
-    // !IS NOT WORKING
-    // Only the last task gets called
     // TODO: add error handling
     // INFO: Each priority value is only once given
-    OSTaskCreate(clockTask, (void*)"Time:", (void*)&tasksStack[0][TASK_STACK_SIZE - 1], freePrio++);
-    OSTaskCreate(statsTask, (void*)"Statistics:", (void*)&tasksStack[1][TASK_STACK_SIZE - 1], freePrio++);
     int i = 0;
-    for (i = 0; i < TASKS_AMOUNT; i++) {                       
+    char buf[6];
+    for (i = 0; i < N_TASKS_AMOUNT; i++) {
+        // sprintf(buf, "%d", i);
+        // print(i, 5, buf);                       
         tasksData[i] = i;                        
-        OSTaskCreate(uiBarTask, (void *)&tasksData[i], (void *)&tasksStack[i][TASK_STACK_SIZE - 1], TASK_HIGH_PRIO + i + 2);
+        OSTaskCreate(uiBarTask, (void *)&tasksData[i], (void *)&tasksStack[i][TASK_STACK_SIZE - 1], TASK_HIGH_PRIO + i);
     }
+    
+    OSTaskCreate(clockTask, (void*)"Time:", (void*)&otherTasks[0][TASK_STACK_SIZE - 1], TASK_HIGH_PRIO + i);
+    OSTaskCreate(statsTask, (void*)"Statistics:", (void*)&otherTasks[1][TASK_STACK_SIZE - 1], TASK_HIGH_PRIO + i + 1);
     
     print(0, INPUT_POS_Y, msg);
     while(1){
