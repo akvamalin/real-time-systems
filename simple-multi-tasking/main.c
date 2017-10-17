@@ -35,6 +35,20 @@ OS_STK initialTaskStack[TASK_STACK_SIZE];
 int tasksData[N_TASKS_AMOUNT];
 byte freePrio = TASK_HIGH_PRIO + 1;
 
+void errorHandler(char *str, UBYTE retnum, UBYTE returnOS){
+	char s[100];
+	sprintf(s, "%s %5d", str, retnum);
+	print(0, 21, s);
+	wait(4);
+	if(returnOS){
+	    PC_DispClrScr(DISP_FGND_WHITE + DISP_BGND_BLACK);
+        exit(1);
+	}
+	else{
+	    print(0, 21, EMPTY_STRING);
+	}
+}
+
 void uiBarTask(void* data){
     int number = *((int*)data);
     char msg[BUFFER];
@@ -81,6 +95,14 @@ void statsTask(void* data){
     }
 }
 
+void createTask(void* func, void* data, void* stack, byte prio){
+    int status;
+    status = OSTaskCreate(func, data, stack, prio);
+    if(status != OS_ERR_NONE){
+        errorHandler("ERROR: Error while creating a task:", status, 1);
+    }
+}
+
 void initialTask(void* data){
     print(26,  0, "uC/OS-II, The Real-Time Kernel");
     print(33,  1, "Simple multi-tasking");
@@ -94,17 +116,16 @@ void initialTask(void* data){
 
     OSStatInit();
 
-    // INFO: Each priority value is only once given
     int i = 0;
     char buf[6];
+    int status;
     for (i = 0; i < N_TASKS_AMOUNT; i++) {
         tasksData[i] = i;                        
-        OSTaskCreate(uiBarTask, (void *)&tasksData[i], (void *)&tasksStack[i][TASK_STACK_SIZE - 1], freePrio + i);
+        createTask(uiBarTask, (void *)&tasksData[i], (void *)&tasksStack[i][TASK_STACK_SIZE - 1], freePrio + i);
     }
-    
-    OSTaskCreate(clockTask, (void*)"Time:", (void*)&otherTasks[0][TASK_STACK_SIZE - 1], freePrio + i);
-    OSTaskCreate(statsTask, (void*)"Statistics:", (void*)&otherTasks[1][TASK_STACK_SIZE - 1], freePrio + 1 + i);
-    
+    createTask(clockTask, (void*)"Time:", (void*)&otherTasks[0][TASK_STACK_SIZE - 1], freePrio + i);
+    createTask(statsTask, (void*)"Statistics:", (void*)&otherTasks[1][TASK_STACK_SIZE - 1], freePrio + 1 + i);
+
     print(0, INPUT_POS_Y, msg);
     while(1){
         if(PC_GetKey(&key)){
@@ -124,7 +145,7 @@ int main(void){
     setbuf(stdout, NULL);
     PC_DispClrScr(DISP_FGND_WHITE + DISP_BGND_GRAY);
     OSInit();
-    OSTaskCreate(initialTask, (void*)0, &initialTaskStack[TASK_STACK_SIZE - 1], freePrio++);
+    createTask(initialTask, (void*)0, &initialTaskStack[TASK_STACK_SIZE - 1], freePrio++);
     OSStart();
     return 0;
 }
