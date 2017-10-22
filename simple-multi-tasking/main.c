@@ -4,13 +4,9 @@
     Hochschule Merseburg
 */
 
-#include  "includes.h"
-#define UBYTE INT8U
 #define TASK_HIGH_PRIO 4
 #define TASK_STACK_SIZE 512
 #define N_TASKS_AMOUNT 10
-#define KEY_ESC 0x1B
-
 #define BUFFER 100
 #define CLOCK_POS_X 0
 #define CLOCK_POS_Y 20
@@ -20,34 +16,15 @@
 #define UI_BAR_SYMBOL 223
 #define UI_BAR_POS_Y 5
 #define INPUT_POS_Y 22
-
-#define DEFAULT_COLOUR DISP_FGND_WHITE + DISP_BGND_BLACK
 #define INT_SIZE 16
 
-#define wait(seconds)  OSTimeDlyHMSM(0, 0, seconds, 0)
-#define tick(times) OSTimeDly(times)
-#define print(x, y, msg) PC_DispStr(x, y, msg, DEFAULT_COLOUR)
-#define EMPTY_STRING "                                                                    "
+#include "../common.h"
 
 OS_STK tasksStack[N_TASKS_AMOUNT][TASK_STACK_SIZE];
 OS_STK otherTasks[2][TASK_STACK_SIZE];
 OS_STK initialTaskStack[TASK_STACK_SIZE];
 int tasksData[N_TASKS_AMOUNT];
 byte freePrio = TASK_HIGH_PRIO + 1;
-
-void errorHandler(char *str, UBYTE retnum, UBYTE returnOS){
-	char s[100];
-	sprintf(s, "%s %5d", str, retnum);
-	print(0, 21, s);
-	wait(4);
-	if(returnOS){
-	    PC_DispClrScr(DISP_FGND_WHITE + DISP_BGND_BLACK);
-        exit(1);
-	}
-	else{
-	    print(0, 21, EMPTY_STRING);
-	}
-}
 
 void uiBarTask(void* data){
     int number = *((int*)data);
@@ -92,14 +69,6 @@ void statsTask(void* data){
         print(STATS_POS_X + tab, STATS_POS_Y, s);
         OSCtxSwCtr = 0;
         wait(1);
-    }
-}
-
-void createTask(void* func, void* data, void* stack, byte prio){
-    int status;
-    status = OSTaskCreate(func, data, stack, prio);
-    if(status != OS_ERR_NONE){
-        errorHandler("ERROR: Error while creating a task:", status, 1);
     }
 }
 
