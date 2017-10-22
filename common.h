@@ -16,6 +16,7 @@
 #define KEY_ESC 0x1B
 #define DEFAULT_COLOUR DISP_FGND_WHITE + DISP_BGND_BLACK
 #define wait(seconds)  OSTimeDlyHMSM(0, 0, seconds, 0)
+#define waitMili(miliseconds)  OSTimeDlyHMSM(0, 0, 0, miliseconds)
 #define tick(times) OSTimeDly(times)
 #define print(x, y, msg) PC_DispStr(x, y, msg, DEFAULT_COLOUR)
 #define EMPTY_STRING "                                                                    "
