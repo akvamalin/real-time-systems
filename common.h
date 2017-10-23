@@ -22,7 +22,7 @@
 #define EMPTY_STRING "                                                                    "
 #include  "includes.h"
 
-extern void errorHandler(char *str, UBYTE retnum, UBYTE returnOS){
+void errorHandler(char *str, UBYTE retnum, UBYTE returnOS){
 	char s[100];
 	sprintf(s, "%s %5d", str, retnum);
 	print(0, 21, s);
@@ -36,7 +36,7 @@ extern void errorHandler(char *str, UBYTE retnum, UBYTE returnOS){
 	}
 }
 
-extern void createTask(void* func, void* data, void* stack, byte prio){
+void createTask(void* func, void* data, void* stack, byte prio){
     int status;
     status = OSTaskCreate(func, data, stack, prio);
     if(status != OS_ERR_NONE){
