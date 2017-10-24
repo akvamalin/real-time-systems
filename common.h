@@ -36,6 +36,15 @@ void errorHandler(char *str, UBYTE retnum, UBYTE returnOS){
 	}
 }
 
+void SemPendSafe(OS_EVENT* semaphore, int timeout){
+	UBYTE err;
+	OSSemPend(semaphore, timeout, &err);
+	if(err != 0){
+		return errorHandler("Error pending semaphore: %d", err, 1);
+	}
+}
+
+
 void createTask(void* func, void* data, void* stack, byte prio){
     int status;
     status = OSTaskCreate(func, data, stack, prio);

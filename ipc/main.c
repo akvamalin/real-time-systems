@@ -37,13 +37,12 @@ void initStruct(struct TaskData* data, int id){
 }
 
 void simpleTask(void* data){    
-    // TODO: handle SemPend error
     struct TaskData* tdata = (struct TaskData*)data;
     char buffer[100];
     UBYTE err;
     
     while(TRUE){
-        OSSemPend(tdata->semaphore, 0, &err);
+        SemPendSafe(tdata->semaphore, 0);
         print(0, TASKS_POS_Y + tdata->id, EMPTY_STRING);
         sprintf(buffer, "id: %d |cc: %d | tc: %d", tdata->id, tdata->cCounter, tdata->tCounter);
         print(0, TASKS_POS_Y + tdata->id, buffer);
@@ -64,7 +63,7 @@ void updateCounters(struct TaskData tasks[]){
         sprintf(buffer, "Stopwatch: %.1f", timeSpent);
         print(0, 2, buffer);
         if( timeSpent >= 4.0){
-            OSSemPend(tasks[i].semaphore, 0, &err);
+            SemPendSafe(tasks[i].semaphore, 0);
             tasks[i].tCounter++;
             time(&tasks[i].lastCall);
             OSSemPost(tasks[i].semaphore);
