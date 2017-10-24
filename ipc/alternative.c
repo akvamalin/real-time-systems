@@ -24,6 +24,7 @@ struct TaskData{
     int cCounter;
     int tCounter;
     int id;
+    time_t lastCall;
     OS_EVENT *semaphore;
 };
 
@@ -31,7 +32,9 @@ void initStruct(struct TaskData* data, int id){
     data->id = id + 1;
     data->cCounter = 0;
     data->tCounter = 0;
-    data->semaphore = OSSemCreate(0);
+    // TODO: add error handling
+    data->semaphore = OSSemCreate(1);
+    time(&data->lastCall);
 }
 
 void simpleTask(void* data){    
@@ -39,20 +42,34 @@ void simpleTask(void* data){
     char buffer[100];
     UBYTE err;
     
-    sprintf(buffer, "id: %d |cc: %d | tc: %d", tdata->id, tdata->cCounter, tdata->tCounter);
-    print(0, TASKS_POS_Y + tdata->id, buffer);
-
     while(TRUE){
-        OSSemPend(tdata->semaphore, OS_TICKS_PER_SEC * 4, &err);
-        //TODO: ADD CODE ERRORS
-        if(err != 0){
-            tdata->tCounter++;
-        }else{
-            tdata->cCounter++;
-        }
+        SemPendSafe(tdata->semaphore, 0);
         print(0, TASKS_POS_Y + tdata->id, EMPTY_STRING);
         sprintf(buffer, "id: %d |cc: %d | tc: %d", tdata->id, tdata->cCounter, tdata->tCounter);
         print(0, TASKS_POS_Y + tdata->id, buffer);
+        //TODO: add error handling
+        OSSemPost(tdata->semaphore);
+        tick(1);
+    }
+}
+
+void updateCounters(struct TaskData tasks[]){
+    double timeSpent = 0.0;
+    time_t endTime;
+    UBYTE err;
+    int i;
+    char buffer[100];
+    for(i = 0; i < N_TASKS_AMOUNT; i++){
+        time(&endTime);
+        timeSpent = difftime(endTime, tasks[i].lastCall); 
+        sprintf(buffer, "Stopwatch: %.1f", timeSpent);
+        print(0, 2, buffer);
+        if( timeSpent >= 4.0){
+            SemPendSafe(tasks[i].semaphore, 0);
+            tasks[i].tCounter++;
+            time(&tasks[i].lastCall);
+            OSSemPost(tasks[i].semaphore);
+        }
     }
 }
 
@@ -71,6 +88,8 @@ void initialTask(void* data){
 
     print(0, INPUT_POS_Y, msg);
     while(1){
+        updateCounters(tasks);
+        
         if(!PC_GetKey(&key)){
             waitMili(200);
             continue;
@@ -85,7 +104,14 @@ void initialTask(void* data){
         taskNumber = key - ASCII_CODE_ZERO;
         
         if(taskNumber < N_TASKS_AMOUNT){
+            time(&tasks[taskNumber].lastCall);
             print(tab, INPUT_POS_Y, keyBuffer);
+            OSSemPend(tasks[taskNumber].semaphore, 0, &err);
+            if(err != 0){
+                sprintf(keyBuffer, "Error: %d", err);
+                print(0, 0, keyBuffer);
+            }   
+            tasks[taskNumber].cCounter++;
             OSSemPost(tasks[taskNumber].semaphore);
         }
         else{
