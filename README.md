@@ -1,6 +1,10 @@
 # real-time-systems
 
-## Inter-task communication
+Task - in the context of the "Real-time Systems" under microC OS II is a thread within a process.
+
+## 1.1 TO DO: Describe first task
+
+## 1.2 Inter-task communication
 
 ### Target
 
@@ -63,3 +67,8 @@ available.The code that called OSSemAccept() needs to examine the returned value
 * Query
 * Accept
 
+## 1.3 Performance test
+
+### Target
+Create 2, 10, 20, 40 Tasks, that wait for a semaphore from the previous task, release a semaphore for the next one and increment a counter. Display the number of round trips per second.
+A round trip counts every time when the list of created tasks has been iterated through.
