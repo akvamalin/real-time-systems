@@ -13,6 +13,12 @@
 #define ASCII_CODE_ZERO 49
 #define ASCII_CODE_SPACE 32
 
+// By default, this program doesn't show much
+// output because of performance measurement.
+// Uncomment the next line to check out the 
+// algorithm workflow in a slow pace.
+// #define DEMO 1
+
 #include "../common.h"
 
 struct TaskData{
@@ -35,14 +41,22 @@ void simpleTask(void* data){
     int tab;
     char buffer[100];
     UBYTE err;
-    sprintf(buffer, "%d. Task ", tdata->index);
+    sprintf(buffer, "%d. Task started. ", tdata->index);
     tab = strlen(buffer);
-    print(0, TASKS_POS_Y + tdata->index, buffer);
+    #ifdef DEMO
+        print(0, TASKS_POS_Y + tdata->index, buffer);
+    #endif
     
     while(TRUE){
-        print(tab, TASKS_POS_Y + tdata->index, "pending...");
+        #ifdef DEMO
+            print(tab, TASKS_POS_Y + tdata->index, "Pending...");
+            wait(1);
+        #endif
         OSSemPend(tdata->semaphore, 0, &err);
-        print(tab, TASKS_POS_Y + tdata->index, "active!");
+        #ifdef DEMO
+            print(tab, TASKS_POS_Y + tdata->index, "Active!");
+            wait(1);
+        #endif
         if(tdata->index + 1 >= tasksAmount){
             roundTrips++;
             OSSemPost(tasks[0].semaphore);
@@ -80,16 +94,19 @@ void initialTask(void* data){
             if(key == KEY_ESC){
                 exit(0);
             }
-    
             if(!started && key == ASCII_CODE_SPACE){
-                print(0, INPUT_POS_Y, "Started! The first semaphore is released");
+                print(0, INPUT_POS_Y, "Started! The first semaphore is released!");
                 started = 1;
                 OSSemPost(tasks[0].semaphore);
             }
         }
         sprintf(buffer, "Roundtrips: %d", roundTrips);
-        print(0, TASKS_POS_Y + tasksAmount, buffer);
-        roundTrips = 0;
+        #ifndef DEMO
+            print(0, TASKS_POS_Y, buffer);
+            roundTrips = 0;
+        #else
+            print(0, TASKS_POS_Y + tasksAmount, buffer);
+        #endif
         wait(1);
     }
 }
@@ -99,7 +116,7 @@ int main(void){
     PC_DispClrScr(DISP_FGND_WHITE + DISP_BGND_GRAY);
     OSInit();
     print(26,  0, "uC/OS-II, The Real-Time Kernel");
-    print(33,  1, "Performance Test");
+    print(33,  1, "Performance Measurement");
     print(34,  2, "Yevhenii Maliavka");
     print(33,  3, "(press ESC to exit)");
     createTask(initialTask, (void*)0, &initialTaskStack[TASK_STACK_SIZE - 1], freePrio++);
