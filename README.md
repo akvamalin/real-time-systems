@@ -1,6 +1,6 @@
 # real-time-systems
 
-This is just a self-educational project that contains the implementation of the practical tasks from the course "Real-time systems" in the University of Applied Science Mersebug and is published here to trace the code changes and host the source code. 
+This is just a self-educational project that contains the implementation of the practical tasks from the course "Real-time systems" in the University of Applied Science Merseburg and is published here to trace the code changes and host the source code. 
 
 This project is not the reference or tutorial, may contain errors and is not and doesn't target the "best-practices" implementation. It also contains some short informational snippets from Wikipedia to make a quick recap of the entities or mechanisms being used or implemented.
 
