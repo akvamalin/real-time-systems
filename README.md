@@ -1,10 +1,14 @@
 # real-time-systems
 
-Task - in the context of the "Real-time Systems" under microC OS II is a thread within a process.
+This is just a self-educational project that contains the implementation of the practical tasks from the course "Real-time systems" in the University of Applied Science Mersebug and is published here to trace the code changes and host the source code. 
+
+This project is not the reference or tutorial, may contain errors and is not and doesn't target the "best-practices" implementation. It also contains some short informational snippets from Wikipedia to make a quick recap of the entities or mechanisms being used or implemented.
 
 ## 1.1 TO DO: Describe first task
 
 ## 1.2 Inter-task communication
+
+Task - in the context of the "Real-time Systems" under microC OS II is a thread within a process.
 
 ### Target
 
@@ -33,7 +37,7 @@ A **semaphore** is a variable or abstract data type used to control access to a 
 
 Semaphores are a useful tool in the prevention of [race conditions](https://en.wikipedia.org/wiki/Race_condition). Semaphores which allow an arbitrary resource count are called **counting semaphores**, while semaphores which are restricted to the values 0 and 1 (or locked/unlocked, unavailable/available) are called **binary semaphores** and are used to implement locks.A mutex is essentially the same thing as a binary semaphore and sometimes uses the same basic implementation. The differences between them are in how they are used. While a binary semaphore may be used as a mutex, a mutex is a more specific use-case, in that only the thread that locked the mutex is supposed to unlock it. Click [here](https://en.wikipedia.org/wiki/Semaphore_(programming)) to read more about semaphores.
 
-#### `Comm() = OSSemCreate(x)'
+#### `Comm() = OSSemCreate(x)`
 This function returns the pointer for a created semaphore.
 `Comm()` is a pointer of the OS_EVENT type.
 If we got NULL, then we should log an error, as the semaphore could not be created.
@@ -70,5 +74,6 @@ available.The code that called OSSemAccept() needs to examine the returned value
 ## 1.3 Performance test
 
 ### Target
-Create 2, 10, 20, 40 Tasks, that wait for a semaphore from the previous task, release a semaphore for the next one and increment a counter. Display the number of round trips per second.
-A round trip counts every time when the list of created tasks has been iterated through.
+Create 2, 10, 20, 40 Tasks, where each next task waits for its semaphore being posted from the previous task, release a semaphore for the next one and pends its semaphore again. 
+The initial tasks displays the number of round trips per second.
+A round trip increments every time when the list of created tasks has been iterated through.
