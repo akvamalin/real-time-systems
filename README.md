@@ -77,7 +77,6 @@ available.The code that called OSSemAccept() needs to examine the returned value
 Create 2, 10, 20, 40 Tasks, where each next task waits for its semaphore being posted from the previous task, release a semaphore for the next one and pends its semaphore again. 
 The initial tasks displays the number of round trips per second.
 A round trip increments every time when the list of created tasks has been iterated through.
-<<<<<<< HEAD
 
 ### Theory 
 
@@ -149,5 +148,3 @@ The ways to solve the priority inversion problem could be:
     * use priority inheritance protocol;
     * use priority ceiling protocol;
     * use mutexes.
-=======
->>>>>>> 27e291d0a6dd3475ee2c524be7edfec2af0ded4f
