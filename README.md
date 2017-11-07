@@ -24,7 +24,7 @@ The task is to program a system with the following functions:
 Each of the 4 workers increment their own call-counter after getting called from the keyboard task, and  the timeout-counter if they are not getting called longer than 4 seconds.
 
 The inter-task communication must be implemented using: 
-* globar variable
+* global variable
 * semaphore
 * message (mailbox)
 
@@ -126,7 +126,7 @@ In the implementation example, we have simulated the task scheduling through the
     TODO:
 ### Theory
 
-**Priority inversion** - is the mechanism, when the task with a lower priority is executed while the one with the higher is blocked (like in the example above).
+**Priority inversion** - is the mechanism, when the task with a lower priority is executed while the one with the higher is blocked.
 In other words, the critical section of the task with a higher priority can be entered through the semaphore (pending), that can be released(posted) in the task with a lower priority. 
 The task with a higher priority whose semaphore has been released comes to the execution through the interrupt of the lower-priority task.  
 
