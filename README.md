@@ -123,14 +123,15 @@ In the implementation example, we have simulated the task scheduling through the
 ## 1.5. Priority Inversion
 
 ### Target
-
+    TODO:
 ### Theory
 
 **Priority inversion** - is the mechanism, when the task with a lower priority is executed while the one with the higher is blocked (like in the example above).
 In other words, the critical section of the task with a higher priority can be entered through the semaphore (pending), that can be released(posted) in the task with a lower priority. 
 The task with a higher priority whose semaphore has been released comes to the execution through the interrupt of the lower-priority task.  
 
-**TODO**: Add a chart curve here from the lesson
+![Scheduling in real time system](scheduling.jpg)
+(Thanks to [Andrii Koval](https://github.com/kvlsky) for this great chart)
 
 The `T_l` task has blocked the `T_m1` and `T_m2`, that are not ready to be executed. When we call `T_l` `V(S1)`, which means we release the semaphore for the task `T_h`, then there are two opportunities:
 * (not performant) just push the blocked task `T_h` to the list of **READY** tasks and make prioritising.
