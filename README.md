@@ -147,5 +147,106 @@ The ways to solve the priority inversion problem could be:
     * forbid the interupts to critical section to make that code be executed as soon as possible;
     * allow the interrupt, but forbid the scheduler;
     * use priority inheritance protocol;
+        * Inheritance mechanism:
+            > For example, we have two tasks with priority inversion. The lower-prio task (prio 6) pends the semaphore of the higher-prio task (prio 4). So, the higher-prio task is blocked. 
+            
+            > Assume, we create another task, that has a middle-prio (5), and comes to the execution. Because this middle-prio task has higher priority than the lower-prio, it may come to the case when the lower-prio task will not get computation time and the higher-prio task will have to wait longer (or forever). 
+            
+            > To avoid this, the inheritance mechanism comes into play. The lower-prio task becomes the prio of the higher-prio task so that no third-side task blocks the whole process. 
     * use priority ceiling protocol;
     * use mutexes.
+
+## Producer/Consumer problem
+**TODO**
+
+## Periodic Task Scheduling
+Periodic - cyclic events, non-periodic - random events, e.g. user interrupts.
+
+* `Timeline scheduling`
+> the actions are strictly planned before using in production, as we've got all the tasks statically defined. Should implement requirements. Need only simple processor with time interrupter. Design is the most important part here.
+
+|Tasks| Frequency |Tasks time in ms. (period)|
+|-----|-----------|-----------------|
+|A|40|25|
+|B|20|50|
+|C|10|100|
+
+
+### Time slice.
+Greatest common divisor (T) - Minor cycle. (25)
+Least common multiple (T) - Major cycle. (200)
+
+We don't need interrupt here. This is needed only in a dynamically executed program.
+We don't have interrupts in Timeline scheduling, because we have already all the things designed and implemented.
+**We have only a timer interrupt to start the minor cycle.**
+
+Necessary requirements:
+* computation time of a C(A) + C(B) <= Minor Cycle
+* C(A) + C(C) <= Minor Cycle
+
+C(A) - is calculated from the `profiler` file by the machine.
+
+Timer - Interrupt:
+n - number of the minor cycles, 0, 1, 2, 3.
+
+Timer interrupt function (Scheduler);
+```c
+int n = 0 // out of the interrupt routine
+
+//.....
+// n is the counter where should we jump
+n = n % (Count of the minor cycles that fit into the major cycle). // e.g. 4
+
+switch(n){
+    case 0:
+        A();
+        B();
+        break;
+    case 1: 
+        A();
+        C();
+        break;
+    case 2:
+        A();
+        B();
+        break;
+    case 3: 
+        A();
+        break;
+}
+
+n++;
+```
+
+### Pros 
+1. Simple to implement, no OS is requireded.
+2. No overhead.
+3. No Producer-Consumer Problem.
+4. No need for semaphores or mutexes (we usually need them to control critical regions, we can use simple integer variable here).
+5. Equidistant calls.
+6. No Jitter.
+
+### Cons
+|Tasks| Frequency |Tasks time in ms. (period)|
+|-----|-----------|-----------------|
+|A|40|25|
+|B|**25**|**40**|
+|C|10|100|
+
+* GCD(T) = 5 ms
+* LCM(T) = 200 ms
+
+We change only one sensor (say, it's cheaper and faster) and everything should be built from the scratch.
+1. Very unflexible and breaks the whole system when we change any of the call periods (T).
+2. Changes of the computation time.
+
+* **Apperiodical call**
+> e.g. with diagnosing computer enter the system and initiate an interrupt.
+we could create a specific task for handling apperiodical tasks if there are some.
+
+* **Overload** task is not ready in its time-span (when the timer interrupt is called and the task is not done).
+    * We can interrupt - cancel. The interrupted task leaves an unconsistent state.
+    * We can let it become executed - we become a shift of all the tasks => domino effect. 
+
+
+
