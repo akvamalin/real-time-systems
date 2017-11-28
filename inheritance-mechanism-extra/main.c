@@ -20,7 +20,7 @@
 struct TaskData{
     int index;
     char* name;
-    OS_EVENT *semaphore;
+    OS_EVENT *mutex;
 };
 
 byte freePrio = TASK_HIGH_PRIO + 1;
@@ -51,24 +51,22 @@ void parentTaskFunc(void* data){
     struct TaskData* tdata = (struct TaskData*)data;
     UBYTE err;
     char strCounter[10], msg[100];
-    int timeout = 0, entered = 0;
+    int entered = 0;
     char info[] = "Parent task is blocked ";
     int tab = strlen(info);
 
     while(TRUE){
-        sprintf(msg, "%s. Already entered: %d", info, entered);
+        sprintf(msg, "Already entered: %d", entered);
         print(0, TASKS_POS_Y, msg);
-        OSSemPend(tdata->semaphore, OS_TICKS_PER_SEC, &err);
+        OSMutexPend(tdata->mutex, 0, &err);
         if(err != 0){
+            sprintf(msg, "%s", info, entered);
             print(0, TASKS_POS_Y, info);
-            sprintf(strCounter, "%d", ++timeout);
             print(tab , TASKS_POS_Y, strCounter);
             continue;
         }
-        timeout = 0;
         entered++;
         print(0, TASKS_POS_Y, EMPTY_STRING);
-        print(0, TASKS_POS_Y, "Parent task has entered!");
     }    
 }
 
@@ -94,7 +92,7 @@ void childTaskFunc(void* data){
         CPULoad(strlen(msg) + 1, TASKS_POS_Y + 3, 1);
         print(0, TASKS_POS_Y + 3, "Child task: CPU load done!Released parent!");
         wait(1);
-        OSSemPost(tdata->semaphore);
+        OSMutexPost(tdata->mutex);
     }    
 }
 
@@ -102,12 +100,13 @@ void initialTask(void* data){
     char buffer[100];
     int i = 0;
     INT16S key;
+    UBYTE err;
 
-    // ???
-    getFreePrio();
+    int mutexPrio = getFreePrio();
 
     parentTask.name = "Parent task";
-    parentTask.semaphore = OSSemCreate(0);
+    parentTask.mutex = OSMutexCreate(mutexPrio, &err);
+    OSMutexPend(parentTask.mutex, 0, &err);
     createTask(parentTaskFunc, (void *)&parentTask, (void *)&parentStck, getFreePrio());
 
     middle1Task.name = "Middle 1 task started";
@@ -119,7 +118,7 @@ void initialTask(void* data){
     createTask(middleTaskFunc, (void *)&middle2Task, (void *)&middle2TaskStck, getFreePrio());
 
     childTask.name = "Child task";
-    childTask.semaphore = parentTask.semaphore;
+    childTask.mutex = parentTask.mutex;
     createTask(childTaskFunc, (void *)&childTask, (void *)&childStck, getFreePrio());
 
     while(1){
