@@ -8,7 +8,7 @@ This project is not the reference or tutorial, may contain errors and is not and
 
 ## 1.2 Inter-task communication
 
-Task - in the context of the "Real-time Systems" under microC OS II is a thread within a process.
+Task - in the context of the "Real-time Systems" under microC OS II is a process.
 
 ### Target
 
@@ -123,7 +123,7 @@ In the implementation example, we have simulated the task scheduling through the
 ## 1.5. Priority Inversion
 
 ### Target
-    TODO:
+    The task with a lower-priority 
 ### Theory
 
 **Priority inversion** - is the mechanism, when the task with a lower priority is executed while the one with the higher is blocked.
@@ -151,7 +151,8 @@ The ways to solve the priority inversion problem could be:
             
             > Assume, we create another task, that has a middle-prio (5), and comes to the execution. Because this middle-prio task has higher priority than the lower-prio, it may come to the case when the lower-prio task will not get computation time and the higher-prio task will have to wait longer (or forever). 
             
-            > To avoid this, the inheritance mechanism comes into play. The lower-prio task gets the prio of the higher-prio task so that no middle-priority task blocks the lower and the higher one. 
+            > To avoid this, the inheritance mechanism comes into play. The lower-prio task gets the prio of the higher-prio task so that no middle-priority task blocks the lower and the higher one. We must use **mutexes** (thas support priority inheritance protocol) instead of **semaphores** here.^
+            > **NOTE!** We should make sure, that the first free highest priority is not used, because it will be used by the lower priority task (that blocks the higher-prio task). This is due to the fact, that each task can have only one priority. 
     * use priority ceiling protocol;
     * use mutexes.
 
@@ -161,7 +162,7 @@ The ways to solve the priority inversion problem could be:
 ## Periodic Task Scheduling
 > Periodic - cyclic events, non-periodic - random events, e.g. user interrupts.
 
-## `Timeline scheduling`
+## `Timeline scheduling` (Everything should be planned by the developer)
 The actions are strictly planned before using in production, as we've got all the tasks statically defined. Should implement requirements. Need only simple processor with time interrupter. Design is the most important part here.
 
 |Tasks| Frequency |Tasks time in ms. (period)|
@@ -219,6 +220,9 @@ switch(n){
 n++;
 ```
 
+Overhead: 50 process cycles to execute the code.
+(In Unix - more than 1000 process cycles to switch the task).
+
 ### Pros 
 1. Simple to implement, no OS is requireded.
 2. No overhead.
@@ -243,12 +247,82 @@ We change only one sensor (say, it's cheaper and faster) and everything should b
 
 2. Changes of the computation time.
 
-3. **Apperiodical call**, for example,  with diagnosing computer enter the system and initiate an interrupt.
+3. **Aperiodical call**, for example,  with diagnosing computer enter the system and initiate an interrupt.
 we could create a specific task for handling apperiodical tasks if there are some.
 
 4. **Overload** task is not ready in its time-span (when the timer interrupt is called and the task is not done).
-    * We can interrupt - cancel. The interrupted task leaves an unconsistent state.
+    * We can interrupt - cancel. The interrupted task leaves an unconsVistent state.
     * We can let it become executed - we become a shift of all the tasks => domino effect. 
+
+## Round Robin Scheduling (Zeitscheibenverfahren) TSO Time Sharing Option (we must controll the time and the repeat intervals, requirements check)
+TODO: make a photo of the charts
+> More about [Round Robin on Wikipedia](https://en.wikipedia.org/wiki/Round-robin_scheduling)
+
+Every user becomes a timedisc. There are three options:
+1. Constant task time (like timeline scheduling).
+* What happens if the task is not done in his own time-span(disk) and we have the next interrupt?
+    ** As a primitive solution, we should plan our tasks to be really short to fit into that time disk.
+    ** More overhead - we should interrupt for a specific time, and the next time the task starts it should continue on the interrupted place (we should save the values from the stack).
+* What happens if we have too many users and not enough time (say, 10 ms. for 10 users and 100 ms. overall time)?
+    ** see the `constant overall time`.
+
+2. Constant overall time.
+TODO: ???????????????????????????????????????????????????????????????????????????
+
+
+
+3. Variable tasks time.
+TODO: 
+
+
+## Static Priority Scheduling (Calculate who comes first)
+
+1. Static priorities/scheduling: the task gets a priority on creation and preserves this priority during the whole lifecycle. 
+We have tasks with the call interval `Ti` and computation time `Ci`.
+Workload `u = Sum(i)[Ci/Ti]`. We must guarantee that the all tasks will be executed to the correct time and eventually finished.
+
+### Rate Monotonic Scheduling RM
+> Prüfungsthema
+Preemptive Scheduling (the higher the frequency - the higher is the priority) - `Prio(Task(i)) ~ 1/Ti` is the guarantee of the timeliness, if the `n <= n * (2^(1/n) - 1)`
+
+        n | time
+        --|--
+        1 | 1
+        2 | 0.828
+        3 | 0.770
+        ..| .....
+        ~ | 0.693
+
+1. ** What if the workload (Rechnerlast) more than 1 (say, 150%) ? ** it will not work.
+Solutions: 
+1. Increase call interval `Ti`.
+2. Decrease `Ci` - take the more performant processor..
+3. Use compiler optimizations (computation time or memory).
+4. Multicore CPUs
+
+2. ** If the workload is smaller than `0.693`?** 
+Here is okay, guarantee to achieve Rechtzeitbedingung/Rechtzeitigkeit (timeliness).
+
+3. ** 0.693 - 1 ** we are not 100% sure. 
+** Worst case analyse ** if all the tasks come at the same time at the beginning.
+We take the task with the highest priority.
+
+Task |T/ms | C/ms | Prio
+-----|-----|------|----
+A    | 40  | 18   | Hi (has higher freq.)
+B    | 60  | 30   | Lo (has lower freq.)
+
+Workload (Rechnerlast) `n = 0.95`
+
+`Prio (A) > Prio (B)`
+
+
+
+ 
+> Note: `OSTaskChangePrio` allows to change the priority dynamically in the microC OS II. The `os_cfg.h` contains the following define that you need to change to 1 to allow the usage of `OSTaskChangePrio`.
+```c
+#define OS_TASK_CHANGE_PRIO_EN    0    /* Line 104: Include code for OSTaskChangePrio() */
+```
 
 
 ## Contributors
