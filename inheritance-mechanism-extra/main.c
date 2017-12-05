@@ -20,7 +20,7 @@
 struct TaskData{
     int index;
     char* name;
-    OS_EVENT *mutex;
+    OS_EVENT *semaphore;
 };
 
 byte freePrio = TASK_HIGH_PRIO + 1;
@@ -36,37 +36,39 @@ int getFreePrio(){
     return freePrio++;
 }
 
-void CPULoad(int x, int y, int limit){
+void CPULoad(int limit){
     int i = 0, j = 0, result = 0;
-    char buf[100];
-    for(i = 0; i < limit; i++){
-        for(j; j < 10000; j++){
-            sprintf(buf, "%d", j);
-            print(x, y, buf);
+        for(j; j < 100000 * limit; j++){
+            result += sin(i) * cos(j) * tan(j) + (sin(j) * cos(i) * (tan(i))*sin(j) * cos(i) * tan(i));
         }
-    }
 }
 
 void parentTaskFunc(void* data){
     struct TaskData* tdata = (struct TaskData*)data;
     UBYTE err;
     char strCounter[10], msg[100];
-    int entered = 0;
+    int entered = 0, timeout = 0;
     char info[] = "Parent task is blocked ";
     int tab = strlen(info);
 
     while(TRUE){
-        sprintf(msg, "Already entered: %d", entered);
-        print(0, TASKS_POS_Y, msg);
-        OSMutexPend(tdata->mutex, 0, &err);
+        memset(&msg[0], 0, sizeof(msg));
+        OSSemPend(tdata->semaphore, 0, &err);
         if(err != 0){
-            sprintf(msg, "%s", info, entered);
-            print(0, TASKS_POS_Y, info);
+            timeout++;
+            sprintf(msg, "%s, entered: %d, timeout: %d", tdata->name, entered, timeout);
+            print(0, TASKS_POS_Y, msg);
             print(tab , TASKS_POS_Y, strCounter);
             continue;
         }
         entered++;
+
         print(0, TASKS_POS_Y, EMPTY_STRING);
+        sprintf(msg, "%s, entered: %d, timeout: %d", tdata->name, entered, timeout);
+        print(0, TASKS_POS_Y, msg);
+        
+        OSSemPost(tdata->semaphore);
+        wait(1);
     }    
 }
 
@@ -77,22 +79,28 @@ void middleTaskFunc(void* data){
     while(TRUE){
         sprintf(buf, "%s. Done %d times. CPU Load ", tdata->name, counter++);
         print(0, TASKS_POS_Y + tdata->index, buf);
-        CPULoad(strlen(buf) + 1,TASKS_POS_Y + tdata->index, 1);
+        CPULoad(10);
+        sprintf(buf, "%s. Done %d times. ", tdata->name, counter++);
+        print(0, TASKS_POS_Y + tdata->index, buf);
         wait(1);
     }    
 }
 
 void childTaskFunc(void* data){
     struct TaskData* tdata = (struct TaskData*)data;
-    char buffer[256];
-    char msg[] = "Child task: blocking parent! CPU Load";
+    UBYTE err;
+    char msg[] = "Child task: blocking parent! CPU Load...";
+    char buf[100];
+    int released = 0;
     while(TRUE){
+        OSSemPend(tdata->semaphore, 0, &err);
         print(0, TASKS_POS_Y + 3, EMPTY_STRING);
-        print(0, TASKS_POS_Y + 3, msg);
-        CPULoad(strlen(msg) + 1, TASKS_POS_Y + 3, 1);
-        print(0, TASKS_POS_Y + 3, "Child task: CPU load done!Released parent!");
-        wait(1);
-        OSMutexPost(tdata->mutex);
+        sprintf(buf, "%s released key: %d", msg, released);
+        print(0, TASKS_POS_Y + 3, buf);
+        memset(&buf[0], 0, sizeof(buf));
+        CPULoad(10);
+        OSSemPost(tdata->semaphore);
+        released++;
     }    
 }
 
@@ -102,23 +110,20 @@ void initialTask(void* data){
     INT16S key;
     UBYTE err;
 
-    int mutexPrio = getFreePrio();
-
     parentTask.name = "Parent task";
-    parentTask.mutex = OSMutexCreate(mutexPrio, &err);
-    OSMutexPend(parentTask.mutex, 0, &err);
+    parentTask.semaphore = OSSemCreate(1);
     createTask(parentTaskFunc, (void *)&parentTask, (void *)&parentStck, getFreePrio());
 
-    middle1Task.name = "Middle 1 task started";
+    middle1Task.name = "Middle 1 task";
     middle1Task.index = 1;
     createTask(middleTaskFunc, (void *)&middle1Task, (void *)&middle1TaskStck, getFreePrio());
 
-    middle2Task.name = "Middle 2 task started";
+    middle2Task.name = "Middle 2 task";
     middle2Task.index = 2;
     createTask(middleTaskFunc, (void *)&middle2Task, (void *)&middle2TaskStck, getFreePrio());
 
     childTask.name = "Child task";
-    childTask.mutex = parentTask.mutex;
+    childTask.semaphore = parentTask.semaphore;
     createTask(childTaskFunc, (void *)&childTask, (void *)&childStck, getFreePrio());
 
     while(1){
