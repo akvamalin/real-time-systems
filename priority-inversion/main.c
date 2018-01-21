@@ -14,6 +14,7 @@
 #define ASCII_CODE_SPACE 32
 
 #include "../common.h"
+#include "math.h"
 
 struct TaskData{
     int index;
@@ -45,19 +46,23 @@ void parentTaskFunc(void* data){
             print(tab , TASKS_POS_Y + 1, strCounter);
             continue;
         }
+        OSSemPost(tdata->semaphore);
         counter = 0;
         print(0, TASKS_POS_Y + 1, "Parent task has entered!");
+        wait(1);
     }    
 }
 
 void childTaskFunc(void* data){
     struct TaskData* tdata = (struct TaskData*)data;
+    int j = 0;
+    UBYTE err;
     while(TRUE){
+        OSSemPend(tdata->semaphore, 0, &err);
         print(0, TASKS_POS_Y, "Child task: blocking parent!");
-        wait(4);
+        wait(5);
         print(0, TASKS_POS_Y, "Child task: released parent!");
         OSSemPost(tdata->semaphore);
-        wait(1);
     }    
 }
 
@@ -67,7 +72,7 @@ void initialTask(void* data){
     INT16S key;
 
     parentTask.name = "Parent task";
-    parentTask.semaphore = OSSemCreate(0);
+    parentTask.semaphore = OSSemCreate(1);
     createTask(parentTaskFunc, (void *)&parentTask, (void *)&parentStck, getFreePrio());
 
     childTask.name = "Child task";
