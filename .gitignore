@@ -1,0 +1,8 @@
+**/*.bat
+**/*.exe
+**/*.h
+**/*.stackdump
+**/*.dll
+**/*.o
+**/*.a
+**/Makefile

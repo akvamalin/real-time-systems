@@ -316,14 +316,36 @@ Workload (Rechnerlast) `n = 0.95`
 
 `Prio (A) > Prio (B)`
 
-
-
- 
 > Note: `OSTaskChangePrio` allows to change the priority dynamically in the microC OS II. The `os_cfg.h` contains the following define that you need to change to 1 to allow the usage of `OSTaskChangePrio`.
 ```c
 #define OS_TASK_CHANGE_PRIO_EN    0    /* Line 104: Include code for OSTaskChangePrio() */
 ```
 
+## 1.6 Final Project: Application weighing and mixing machine
+
+### Target
+The machine includes following working units: 
+* 2 weighing units
+* 3 components
+* 1 water gate
+* 1 mixer
+
+The recipe consists of:
+* 6 weight values
+* time water gate is open
+* dry mixing time
+* wet mixing time
+
+#### The process
+Filling the weighing machine with the components according to the recipe, emptying when requiered into the mixer (one after another).
+`Mixer`: Requests to empty the weighing machine, performs dry mixing, requests adding water, performs wet mixing, performs emptying.
+
+#### Requirements
+* 1 Keyboard-Task to request the recie and start.
+* 2 Identical weighing tasks.
+* 1 Mixing task.
+* 1 Task for visualizing the whole process.
+* The weighing values can be set higher of lower.
 
 ## Contributors
 Thanks to [Andrii Koval](https://github.com/kvlsky) for great charts.
