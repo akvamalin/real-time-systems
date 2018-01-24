@@ -13,14 +13,53 @@
 #define COMMON_H
 
 #define UBYTE INT8U
-#define KEY_ESC 0x1B
+#define KEY_ESC 27
+#define KEY_SPACE 32
 #define DEFAULT_COLOUR DISP_FGND_WHITE + DISP_BGND_BLACK
 #define wait(seconds)  OSTimeDlyHMSM(0, 0, seconds, 0)
 #define waitMili(miliseconds)  OSTimeDlyHMSM(0, 0, 0, miliseconds)
 #define tick(times) OSTimeDly(times)
 #define print(x, y, msg) PC_DispStr(x, y, msg, DEFAULT_COLOUR)
 #define EMPTY_STRING "                                                                    "
+#define STATUS_POS_X 0
+#define STATUS_POS_Y 0
+#define STATUS_WAIT_TIME 2
+
 #include  "includes.h"
+#include <stdarg.h>
+
+//use this function instead of print define
+void printy(int x, int y, const char* format, ...){
+	char buffer[256];
+	va_list args;
+	va_start(args, format);
+	vsprintf(buffer, format, args);
+	print(x, y, buffer);
+	va_end(args);
+}
+
+void status(const char* format, ...){
+	char buffer[256];
+	va_list args;
+	va_start(args, format);
+	vsprintf(buffer, format, args);
+	printy(STATUS_POS_X, STATUS_POS_Y, "STATUS: %s", buffer);
+	va_end(args);
+	wait(STATUS_WAIT_TIME);
+	printy(STATUS_POS_X, STATUS_POS_Y, EMPTY_STRING);
+}
+
+// Priority functionality
+// backwards compatible
+// the old modules use built-in freePrio
+// and getFreePrio. The first available
+// free priority is 5, the higher priorities
+// are already in system use
+byte nextFreePrio = 5;
+
+byte getNextFreePrio(){
+    return nextFreePrio++;
+}
 
 void errorHandler(char *str, UBYTE retnum, UBYTE returnOS){
 	char s[100];
