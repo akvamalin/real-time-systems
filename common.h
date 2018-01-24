@@ -23,7 +23,7 @@
 #define EMPTY_STRING "                                                                    "
 #define STATUS_POS_X 0
 #define STATUS_POS_Y 0
-#define STATUS_WAIT_TIME 2
+#define STATUS_WAIT_TIME 1
 
 #include  "includes.h"
 #include <stdarg.h>

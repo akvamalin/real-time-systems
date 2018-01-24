@@ -29,6 +29,11 @@ struct Components{
     int C;
 };
 
+struct Point{
+    int x;
+    int y;
+};
+
 struct Recipe{
     struct Components* weight1;
     struct Components* weight2;
@@ -37,16 +42,42 @@ struct Recipe{
     int wetmixDuration;
 };
 
+struct Scale{
+    int id;
+    OS_EVENT* semaphore;
+    struct Components* components;
+    struct Point* infP;
+};
+
+struct ScaleTaskOpts{
+    char componentName;
+    struct Scale* scale;
+    int componentLimit;
+};
+
+struct WatchTaskOpts{
+    struct Scale* scale1;
+    struct Scale* scale2;
+    struct Recipe* recipe;
+};
 
 // FUNCTIONS DECLARATIONS
 ///////////////////////////////////////////////////////////////////////////////////
 struct Recipe* readRecipe(char* path);
 void initialTask(void* data);
-
+void fillScaleComponentTask(void* data);
+void watchTask(void* data);
+byte isScaleComponentEmpty(const struct ScaleTaskOpts* opts);
+void fillScaleComponent(const struct ScaleTaskOpts* opts);
+void fill(int* a, const int* b);
+void displayScaleInfo(const struct Scale* scale, const struct Components* components);
 
 // GLOBAL VARIABLES
 ///////////////////////////////////////////////////////////////////////////////////
-OS_STK initialTaskStack[TASK_STACK_SIZE];
+OS_STK  initialTaskStack[TASK_STACK_SIZE], 
+        watchTaskStack[TASK_STACK_SIZE], 
+        fillScaleComponentA1TaskStack[TASK_STACK_SIZE],
+        fillScaleComponentB1TaskStack[TASK_STACK_SIZE];
 
 
 // MAIN
@@ -71,7 +102,34 @@ int main(void){
 void initialTask(void* data){    
     INT16S key;
     printy(POS_X_INITIAL_TASK, POS_Y_INITIAL_TASK, "[INITIAL TASK]: working...");
+    
     struct Recipe* recipe = NULL;
+    struct Scale scale1, scale2;
+    scale1.id = 1;
+    scale1.semaphore = OSSemCreate(1);
+    scale1.components = (struct Components*)malloc(sizeof(struct Components));
+    scale1.components->A = scale1.components->B = scale1.components->C = 0;
+    scale1.infP = (struct Point*)malloc(sizeof(struct Point));
+    scale1.infP->x = 0;
+    scale1.infP->y = 10;
+    
+    scale2.id = 2;
+    scale2.semaphore = OSSemCreate(1);
+    scale2.components = (struct Components*)malloc(sizeof(struct Components));
+    scale2.components->A = scale2.components->B = scale2.components->C = 0;
+    scale2.infP = (struct Point*)malloc(sizeof(struct Point));
+    scale2.infP->x = 50;
+    scale2.infP->y = 10;
+
+    struct ScaleTaskOpts a1, b1;
+    a1.componentName = 'A';
+    a1.scale = &scale1;
+    b1.componentName = 'B';
+    b1.scale = &scale1;
+
+    struct WatchTaskOpts wopts;
+    wopts.scale1 = &scale1;
+    wopts.scale2 = &scale2;
 
     while(1){
         if(PC_GetKey(&key)){
@@ -83,11 +141,114 @@ void initialTask(void* data){
                 status("Key SPACE pressed");
                 status("Read recipe...");
                 recipe = readRecipe(RECIPE_PATH);
+                wopts.recipe = recipe;
                 status("Recipe has been read");
-                wait(1);
+                status("Start fillScaleComponentTask for scale 1");
+                a1.componentLimit = recipe->weight1->A;
+                b1.componentLimit = recipe->weight1->B;
+                createTask(fillScaleComponentTask, (void*)&a1, &fillScaleComponentA1TaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
+                createTask(fillScaleComponentTask, (void*)&b1, &fillScaleComponentB1TaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
+                createTask(watchTask, (void*)&wopts, &watchTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
             }
         }
         wait(1);
+    }
+}
+
+void watchTask(void* data){
+    UBYTE err;
+    struct WatchTaskOpts* opts = (struct WatchTaskOpts*)data;
+    while(1){
+        displayScaleInfo(opts->scale1, opts->recipe->weight1);
+        displayScaleInfo(opts->scale2, opts->recipe->weight2);
+        wait(1);
+    }
+
+}
+
+void displayScaleInfo(const struct Scale* scale, const struct Components* components){
+    UBYTE err;
+    OSSemPend(scale->semaphore, 0, &err);
+    status("GOT SEMAPHORE");
+    if(err){
+        printy(0, 1, "UNKNOWN ERROR! Terminating");
+        wait(5);
+        exit(1);
+    }
+    printy(scale->infP->x, scale->infP->y, "[Scale %d]", scale->id);
+    printy(scale->infP->x, scale->infP->y + 1 , "[Component A]: %d|%d", scale->components->A, components->A);
+    printy(scale->infP->x, scale->infP->y + 2 , "[Component B: %d|%d", scale->components->B, components->B);
+    printy(scale->infP->x, scale->infP->y + 3, "[Component C: %d|%d", scale->components->C, components->C);
+    OSSemPost(scale->semaphore);
+}  
+
+void fillScaleComponentTask(void* data){
+    UBYTE err;
+    struct ScaleTaskOpts* opts = (struct ScaleTaskOpts*)data;
+    struct Scale* scale = opts->scale;
+
+    while(1){
+        if(!isScaleComponentEmpty(opts)){
+            status("Scale %d Component %c is not empty!", scale->id, opts->componentName);
+            continue;
+        }
+        OSSemPend(scale->semaphore, 0, &err);
+        if(err){
+            printy(0, 1, "UNKNOWN ERROR! Terminating");
+            exit(1);
+        }
+        fillScaleComponent(opts);
+        status("Scale %d Component %c has been filled!", scale->id, opts->componentName);
+        OSSemPost(scale->semaphore);
+        wait(1);
+    }
+}
+
+void fillScaleComponent(const struct ScaleTaskOpts* opts){
+    struct Scale* scale = opts->scale;
+    switch(opts->componentName){
+        case 'A':
+            fill(&(scale->components->A), &(opts->componentLimit));
+            break;
+        case 'B':
+            fill(&(scale->components->B), &(opts->componentLimit));
+            break;
+        case 'C':
+            fill(&(scale->components->C), &(opts->componentLimit));
+            break;
+        default:
+            status("ERROR! UNKOWN COMPONENT NAME!");
+            exit(1);
+    }
+}
+
+void fill(int* a, const int* b){
+    while(*a < *b){
+        *a += 10;
+        status("FILLING: %d/%d", *a, *b);
+        wait(1);
+    }
+}
+
+byte isScaleComponentEmpty(const struct ScaleTaskOpts* opts){
+    switch(opts->componentName){
+         case 'A':
+            if(opts->scale->components->A == 0){
+                return 1;
+            }
+            return 0;
+        case 'B':
+            if(opts->scale->components->B == 0){
+                return 1;
+            }
+            return 0;
+        case 'C':
+             if(opts->scale->components->C == 0){
+                return 1;
+            }
+            return 0;
+        default:
+            return 1;
     }
 }
 
