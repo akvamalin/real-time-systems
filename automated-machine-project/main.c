@@ -50,7 +50,7 @@ struct Scale{
     struct Point* infP;
 };
 
-struct ScaleTaskOpts{
+struct FillTaskOpts{
     char componentName;
     struct Scale* scale;
     int componentLimit;
@@ -62,7 +62,7 @@ struct WatchTaskOpts{
     struct Scale* scale1;
     struct Scale* scale2;
     struct Recipe* recipe;
-    struct ScaleTaskOpts* fillingOpts;
+    struct FillTaskOpts** fillingOpts;
 };
 
 // FUNCTIONS DECLARATIONS
@@ -71,8 +71,8 @@ struct Recipe* readRecipe(char* path);
 void initialTask(void* data);
 void fillScaleComponentTask(void* data);
 void watchTask(void* data);
-byte isScaleComponentFull(const struct ScaleTaskOpts* opts);
-void fillScaleComponent(const struct ScaleTaskOpts* opts);
+byte isScaleComponentFull(const struct FillTaskOpts* opts);
+void fillScaleComponent(const struct FillTaskOpts* opts);
 void fill(int* a, const int* b);
 void displayScaleInfo(const struct Scale* scale, const struct Components* components);
 
@@ -129,42 +129,42 @@ void initialTask(void* data){
     scale2.infP->x = 50;
     scale2.infP->y = 15;
 
-    struct ScaleTaskOpts a1, b1, c1;
+    struct FillTaskOpts a1, b1, c1;
     a1.componentName = 'A';
     a1.infP.x = 0;
     a1.infP.y = 10;
     a1.scale = &scale1;
     a1.status = 0;
     b1.componentName = 'B';
-    b1.infP.x = 20;
+    b1.infP.x = 18;
     b1.infP.y = 10;
     b1.status = 0;
     b1.scale = &scale1;
     c1.componentName = 'C';
     c1.status = 0;
     c1.scale = &scale1;
-    c1.infP.x = 40;
+    c1.infP.x = 33;
     c1.infP.y = 10;
 
-    struct ScaleTaskOpts a2, b2, c2;
+    struct FillTaskOpts a2, b2, c2;
     a2.componentName = 'A';
     a2.status = 0;
     a2.scale = &scale2;
-    a2.infP.x = 100;
+    a2.infP.x = 48;
     a2.infP.y = 10;
     b2.componentName = 'B';
     b2.status = 0;
     b2.scale = &scale2;
-    b2.infP.x = 80;
+    b2.infP.x = 63;
     b2.infP.y = 10;
     c2.componentName = 'C';
     c2.status = 0;
     c2.scale = &scale2;
-    c2.infP.x = 60;
+    c2.infP.x = 78;
     c2.infP.y = 10;
 
-    struct ScaleTaskOpts allOpts[COMPONENTS_COUNT] = {a1, b1, c1, a2, b2, c2};
     struct WatchTaskOpts wopts;
+    struct FillTaskOpts* allOpts[COMPONENTS_COUNT] = {&a1, &b1, &c1, &a2, &b2, &c2};
     wopts.scale1 = &scale1;
     wopts.scale2 = &scale2;
     wopts.fillingOpts = allOpts;
@@ -215,30 +215,32 @@ void initialTask(void* data){
     }
 }
 
-// void displayFillingComponentInfo( struct ScaleTaskOpts* opts){
-//     printy(opts->infP.x, opts->infP.y, "[Filling Task]");
-//     printy(opts->infP.x, opts->infP.y + 1, "Target: Scale %d", opts->scale->id);
-//     printy(opts->infP.x, opts->infP.y + 2, "Component: %c", opts->componentName);
-//     printy(opts->infP.x, opts->infP.y + 3, "Status: %d", opts->status);
-// }
+void displayFillingComponentInfo(const struct FillTaskOpts* opts){
+    printy(opts->infP.x, opts->infP.y, "[Filling Task]");
+    printy(opts->infP.x, opts->infP.y + 1, "Target:Scale%d", opts->scale->id);
+    printy(opts->infP.x, opts->infP.y + 2, "Component:%c", opts->componentName);
+    printy(opts->infP.x, opts->infP.y + 3, "Status:%s", opts->status == 0 ? "waiting" : "loading");
+}
 
 void watchTask(void* data){
     UBYTE err;
     struct WatchTaskOpts* opts = (struct WatchTaskOpts*)data;
+    struct FillTaskOpts** headFillingOpts = opts->fillingOpts;
     int i;
     while(1){
         displayScaleInfo(opts->scale1, opts->recipe->weight1);
         displayScaleInfo(opts->scale2, opts->recipe->weight2);
-        // for(i = 0; i < COMPONENTS_COUNT; i++){
-        //     displayFillingComponentInfo(opts->fillingOpts);
-        // }
+        for(i = 0; i < COMPONENTS_COUNT; i++){
+            displayFillingComponentInfo(*(opts->fillingOpts)++);
+        }
+        opts->fillingOpts = headFillingOpts;
         wait(1);
     }
 }
 
 void fillScaleComponentTask(void* data){
     UBYTE err;
-    struct ScaleTaskOpts* opts = (struct ScaleTaskOpts*)data;
+    struct FillTaskOpts* opts = (struct FillTaskOpts*)data;
     struct Scale* scale = opts->scale;
 
     while(1){
@@ -248,19 +250,19 @@ void fillScaleComponentTask(void* data){
             wait(1);
             continue;
         }
-        opts->status = 1;
         OSSemPend(scale->semaphore, 0, &err);
         if(err){
             printy(0, 1, "UNKNOWN ERROR! Terminating");
             exit(1);
         }
+        opts->status = 1;
         fillScaleComponent(opts);
         OSSemPost(scale->semaphore);
         wait(1);
     }
 }
 
-void fillScaleComponent(const struct ScaleTaskOpts* opts){
+void fillScaleComponent(const struct FillTaskOpts* opts){
     struct Scale* scale = opts->scale;
     switch(opts->componentName){
         case 'A':
@@ -286,7 +288,7 @@ void fill(int* a, const int* b){
     }
 }
 
-byte isScaleComponentFull(const struct ScaleTaskOpts* opts){
+byte isScaleComponentFull(const struct FillTaskOpts* opts){
     switch(opts->componentName){
          case 'A':
             if(opts->scale->components->A == opts->componentLimit){
