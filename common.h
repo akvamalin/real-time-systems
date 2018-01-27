@@ -1,3 +1,6 @@
+#ifndef COMMON_H
+#define COMMON_H
+
 /*
 	Yevhenii Maliavka
     BAIN5
@@ -8,9 +11,6 @@
 	********************************************************
 	TODO: split into interface and src
 */
-
-#ifndef COMMON_H
-#define COMMON_H
 
 #define UBYTE INT8U
 #define KEY_ESC 27
@@ -26,6 +26,23 @@
 
 #include  "includes.h"
 #include <stdarg.h>
+
+struct Point{
+    int x;
+    int y;
+};
+
+// Priority functionality
+// backwards compatible
+// the old modules use built-in freePrio
+// and getFreePrio. The first available
+// free priority is 5, the higher priorities
+// are already in system use
+byte nextFreePrio = 5;
+
+byte getNextFreePrio(){
+    return nextFreePrio++;
+}
 
 //use this function instead of print define
 void printy(int x, int y, const char* format, ...){
@@ -45,18 +62,6 @@ void status(const char* format, ...){
 	printy(STATUS_POS_X, STATUS_POS_Y, EMPTY_STRING);
 	printy(STATUS_POS_X, STATUS_POS_Y, "STATUS: %s", buffer);
 	va_end(args);
-}
-
-// Priority functionality
-// backwards compatible
-// the old modules use built-in freePrio
-// and getFreePrio. The first available
-// free priority is 5, the higher priorities
-// are already in system use
-byte nextFreePrio = 5;
-
-byte getNextFreePrio(){
-    return nextFreePrio++;
 }
 
 void errorHandler(char *str, UBYTE retnum, UBYTE returnOS){
@@ -80,7 +85,6 @@ void SemPendSafe(OS_EVENT* semaphore, int timeout){
 		return errorHandler("Error pending semaphore: %d", err, 1);
 	}
 }
-
 
 void createTask(void* func, void* data, void* stack, byte prio){
     int status;

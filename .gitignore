@@ -1,6 +1,8 @@
 **/*.bat
 **/*.exe
-**/*.h
+**/includes.h
+**/os_cfg.h
+**/app_cfg.h
 **/*.stackdump
 **/*.dll
 **/*.o
