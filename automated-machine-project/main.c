@@ -407,9 +407,9 @@ byte isScaleComponentFull(const struct FillScaleTaskOpts* opts){
 
 void displayScaleInfo(const struct Scale* scale, const struct Components* components){
     printy(scale->infP->x, scale->infP->y, "[Scale %d]", scale->id);
-    printy(scale->infP->x, scale->infP->y + 1 , "[Component A]: %d|%d", scale->components->A, components->A);
-    printy(scale->infP->x, scale->infP->y + 2 , "[Component B: %d|%d", scale->components->B, components->B);
-    printy(scale->infP->x, scale->infP->y + 3, "[Component C: %d|%d", scale->components->C, components->C);
+    printy(scale->infP->x, scale->infP->y + 1 , "[Component A]: %3d|%3d", scale->components->A, components->A);
+    printy(scale->infP->x, scale->infP->y + 2 , "[Component B: %3d|%3d", scale->components->B, components->B);
+    printy(scale->infP->x, scale->infP->y + 3, "[Component C: %3d|%3d", scale->components->C, components->C);
 }  
 
 void displayFillingComponentInfo(const struct FillScaleTaskOpts* opts){
@@ -421,7 +421,7 @@ void displayFillingComponentInfo(const struct FillScaleTaskOpts* opts){
 
 void displayMixer(const struct Mixer* mixer, int total){
     printy(mixer->infP.x, mixer->infP.y, "[MIXER]");
-    printy(mixer->infP.x, mixer->infP.y + 1, "Load: %d|%d", mixer->load, total);
+    printy(mixer->infP.x, mixer->infP.y + 1, "Load: %3d|%3d", mixer->load, total);
     printy(mixer->infP.x, mixer->infP.y + 2, "Status: %s", mixer->status == 0 ? "waiting" : "working");
 }
 
