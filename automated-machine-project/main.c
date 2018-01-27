@@ -50,7 +50,7 @@ struct Scale{
     struct Point* infP;
 };
 
-struct FillTaskOpts{
+struct FillScaleTaskOpts{
     char componentName;
     struct Scale* scale;
     int componentLimit;
@@ -58,12 +58,28 @@ struct FillTaskOpts{
     int status;
 };
 
+struct Mixer{
+    int load;
+    int status;
+    OS_EVENT* semaphore;
+    struct Point infP;
+};
+
+struct FillMixerTaskOpts{
+    struct Scale* scale;
+    struct Mixer* mixer;
+    struct Components* limits;
+    int totalLoad;
+};
+
 struct WatchTaskOpts{
     struct Scale* scale1;
     struct Scale* scale2;
     struct Recipe* recipe;
-    struct FillTaskOpts** fillingOpts;
+    struct FillScaleTaskOpts** fillingOpts;
+    struct Mixer* mixer;
 };
+
 
 // FUNCTIONS DECLARATIONS
 ///////////////////////////////////////////////////////////////////////////////////
@@ -71,10 +87,14 @@ struct Recipe* readRecipe(char* path);
 void initialTask(void* data);
 void fillScaleComponentTask(void* data);
 void watchTask(void* data);
-byte isScaleComponentFull(const struct FillTaskOpts* opts);
-void fillScaleComponent(const struct FillTaskOpts* opts);
+byte isScaleComponentFull(const struct FillScaleTaskOpts* opts);
+void fillScaleComponent(const struct FillScaleTaskOpts* opts);
 void fill(int* a, const int* b);
 void displayScaleInfo(const struct Scale* scale, const struct Components* components);
+void displayFillingComponentInfo(const struct FillScaleTaskOpts* opts);
+void fillMixerTask(void* data);
+void displayMixer(const struct Mixer* mixer, int total);
+int calcTotalLoad(struct Recipe* recipe);
 
 // GLOBAL VARIABLES
 ///////////////////////////////////////////////////////////////////////////////////
@@ -85,7 +105,9 @@ OS_STK  initialTaskStack[TASK_STACK_SIZE],
         fillScaleComponentC1TaskStack[TASK_STACK_SIZE],
         fillScaleComponentA2TaskStack[TASK_STACK_SIZE],
         fillScaleComponentB2TaskStack[TASK_STACK_SIZE],
-        fillScaleComponentC2TaskStack[TASK_STACK_SIZE];
+        fillScaleComponentC2TaskStack[TASK_STACK_SIZE],
+        fillMixerTask1Stack[TASK_STACK_SIZE],
+        fillMixerTask2Stack[TASK_STACK_SIZE];
 
 
 // MAIN
@@ -111,6 +133,13 @@ void initialTask(void* data){
     INT16S key;
     printy(POS_X_INITIAL_TASK, POS_Y_INITIAL_TASK, "[INITIAL TASK]: working...");
     
+    struct Mixer* mixer = (struct Mixer*)malloc(sizeof(struct Mixer));
+    mixer->load = 0;
+    mixer->status = 0;
+    mixer->semaphore = OSSemCreate(1);
+    mixer->infP.x = 30;
+    mixer->infP.y = 20;
+
     struct Recipe* recipe = NULL;
     struct Scale scale1, scale2;
     scale1.id = 1;
@@ -129,7 +158,7 @@ void initialTask(void* data){
     scale2.infP->x = 50;
     scale2.infP->y = 15;
 
-    struct FillTaskOpts a1, b1, c1;
+    struct FillScaleTaskOpts a1, b1, c1;
     a1.componentName = 'A';
     a1.infP.x = 0;
     a1.infP.y = 10;
@@ -146,7 +175,7 @@ void initialTask(void* data){
     c1.infP.x = 33;
     c1.infP.y = 10;
 
-    struct FillTaskOpts a2, b2, c2;
+    struct FillScaleTaskOpts a2, b2, c2;
     a2.componentName = 'A';
     a2.status = 0;
     a2.scale = &scale2;
@@ -164,10 +193,18 @@ void initialTask(void* data){
     c2.infP.y = 10;
 
     struct WatchTaskOpts wopts;
-    struct FillTaskOpts* allOpts[COMPONENTS_COUNT] = {&a1, &b1, &c1, &a2, &b2, &c2};
+    struct FillScaleTaskOpts* allOpts[COMPONENTS_COUNT] = {&a1, &b1, &c1, &a2, &b2, &c2};
     wopts.scale1 = &scale1;
     wopts.scale2 = &scale2;
     wopts.fillingOpts = allOpts;
+    wopts.mixer = mixer;
+
+    struct FillMixerTaskOpts fillMixerOpts1, fillMixerOpts2;
+    fillMixerOpts1.mixer = mixer;
+    fillMixerOpts1.scale = &scale1;
+    
+    fillMixerOpts2.mixer = mixer;
+    fillMixerOpts2.scale = &scale2;
 
     while(1){
         if(PC_GetKey(&key)){
@@ -190,12 +227,17 @@ void initialTask(void* data){
 
                 // set components volume limit
                 ///////////////////////////////////////////////////////////////////////////////////
+
                 a1.componentLimit = recipe->weight1->A;
                 b1.componentLimit = recipe->weight1->B;
                 c1.componentLimit = recipe->weight1->C;
                 a2.componentLimit = recipe->weight2->A;
                 b2.componentLimit = recipe->weight2->B;
                 c2.componentLimit = recipe->weight2->C;
+                fillMixerOpts1.limits = recipe->weight1;
+                fillMixerOpts2.limits = recipe->weight2;
+                fillMixerOpts1.totalLoad = fillMixerOpts2.totalLoad = calcTotalLoad(recipe);
+                
 
                 // Start watching task
                 ///////////////////////////////////////////////////////////////////////////////////
@@ -203,6 +245,8 @@ void initialTask(void* data){
 
                 // Start fillin components tasks
                 ///////////////////////////////////////////////////////////////////////////////////
+                createTask(fillMixerTask, (void*)&fillMixerOpts1, &fillMixerTask1Stack[TASK_STACK_SIZE - 1], getNextFreePrio());
+                createTask(fillMixerTask, (void*)&fillMixerOpts2, &fillMixerTask2Stack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(fillScaleComponentTask, (void*)&a1, &fillScaleComponentA1TaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(fillScaleComponentTask, (void*)&b1, &fillScaleComponentB1TaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(fillScaleComponentTask, (void*)&c1, &fillScaleComponentC1TaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
@@ -215,18 +259,65 @@ void initialTask(void* data){
     }
 }
 
-void displayFillingComponentInfo(const struct FillTaskOpts* opts){
-    printy(opts->infP.x, opts->infP.y, "[Filling Task]");
-    printy(opts->infP.x, opts->infP.y + 1, "Target:Scale%d", opts->scale->id);
-    printy(opts->infP.x, opts->infP.y + 2, "Component:%c", opts->componentName);
-    printy(opts->infP.x, opts->infP.y + 3, "Status:%s", opts->status == 0 ? "waiting" : "loading");
+void unloadComponent(int* source, int* destination){
+    int loadCapacity = 10;
+    while(*source){
+        *destination += loadCapacity;
+        *source -= loadCapacity;
+        wait(1);
+    }
+}
+
+byte isScaleFull(const struct Components* values, const struct Components* limits){
+    if(values->A != limits->A || values->B != limits->B || values->C != limits->C){
+        return 0;
+    }
+    return 1;
+}
+
+void fillMixerTask(void* data){
+    UBYTE err;
+    struct FillMixerTaskOpts* opts = (struct FillMixerTaskOpts*)data;
+    while(1){
+        OSSemPend(opts->scale->semaphore, 0, &err);
+        if(err){
+            printy(0, 1, "A UNKNOWN ERROR in MIXER! Terminating");
+            wait(5);
+            exit(1);
+        }
+        // WTF
+        if(!isScaleFull(opts->scale->components, opts->limits)){
+            OSSemPost(opts->scale->semaphore);
+            wait(1);
+            continue;
+        }
+        OSSemPend(opts->mixer->semaphore, 0, &err);
+        opts->mixer->status = 0;
+        if(err){
+            printy(0, 1, "B UNKNOWN ERROR in MIXER! Terminating");
+            wait(1);
+            exit(1);
+        }
+        if(opts->mixer->load >= opts->totalLoad){
+            wait(1);
+            continue;
+        }
+        opts->mixer->status = 1;
+        unloadComponent(&(opts->scale->components->A), &(opts->mixer->load));
+        unloadComponent(&(opts->scale->components->B), &(opts->mixer->load));
+        unloadComponent(&(opts->scale->components->C), &(opts->mixer->load));
+        OSSemPost(opts->mixer->semaphore);
+        OSSemPost(opts->scale->semaphore);
+        wait(1);
+    }
 }
 
 void watchTask(void* data){
     UBYTE err;
     struct WatchTaskOpts* opts = (struct WatchTaskOpts*)data;
-    struct FillTaskOpts** headFillingOpts = opts->fillingOpts;
+    struct FillScaleTaskOpts** headFillingOpts = opts->fillingOpts;
     int i;
+    int totalLoad = calcTotalLoad(opts->recipe);
     while(1){
         displayScaleInfo(opts->scale1, opts->recipe->weight1);
         displayScaleInfo(opts->scale2, opts->recipe->weight2);
@@ -234,13 +325,14 @@ void watchTask(void* data){
             displayFillingComponentInfo(*(opts->fillingOpts)++);
         }
         opts->fillingOpts = headFillingOpts;
+        displayMixer(opts->mixer, totalLoad);
         wait(1);
     }
 }
 
 void fillScaleComponentTask(void* data){
     UBYTE err;
-    struct FillTaskOpts* opts = (struct FillTaskOpts*)data;
+    struct FillScaleTaskOpts* opts = (struct FillScaleTaskOpts*)data;
     struct Scale* scale = opts->scale;
 
     while(1){
@@ -262,7 +354,9 @@ void fillScaleComponentTask(void* data){
     }
 }
 
-void fillScaleComponent(const struct FillTaskOpts* opts){
+
+
+void fillScaleComponent(const struct FillScaleTaskOpts* opts){
     struct Scale* scale = opts->scale;
     switch(opts->componentName){
         case 'A':
@@ -288,7 +382,7 @@ void fill(int* a, const int* b){
     }
 }
 
-byte isScaleComponentFull(const struct FillTaskOpts* opts){
+byte isScaleComponentFull(const struct FillScaleTaskOpts* opts){
     switch(opts->componentName){
          case 'A':
             if(opts->scale->components->A == opts->componentLimit){
@@ -317,6 +411,25 @@ void displayScaleInfo(const struct Scale* scale, const struct Components* compon
     printy(scale->infP->x, scale->infP->y + 2 , "[Component B: %d|%d", scale->components->B, components->B);
     printy(scale->infP->x, scale->infP->y + 3, "[Component C: %d|%d", scale->components->C, components->C);
 }  
+
+void displayFillingComponentInfo(const struct FillScaleTaskOpts* opts){
+    printy(opts->infP.x, opts->infP.y, "[Filling Task]");
+    printy(opts->infP.x, opts->infP.y + 1, "Target:Scale%d", opts->scale->id);
+    printy(opts->infP.x, opts->infP.y + 2, "Component:%c", opts->componentName);
+    printy(opts->infP.x, opts->infP.y + 3, "Status:%s", opts->status == 0 ? "waiting" : "loading");
+}
+
+void displayMixer(const struct Mixer* mixer, int total){
+    printy(mixer->infP.x, mixer->infP.y, "[MIXER]");
+    printy(mixer->infP.x, mixer->infP.y + 1, "Load: %d|%d", mixer->load, total);
+    printy(mixer->infP.x, mixer->infP.y + 2, "Status: %s", mixer->status == 0 ? "waiting" : "working");
+}
+
+int calcTotalLoad(struct Recipe* recipe){
+    int totalWeight1 = recipe->weight1->A + recipe->weight1->B + recipe->weight1->C;
+    int totalWeight2 = recipe->weight2->A + recipe->weight2->B + recipe->weight2->C;
+    return totalWeight1 + totalWeight2;
+}
 
 struct Recipe* readRecipe(char* path){
     struct Recipe* recipe = (struct Recipe*)malloc(sizeof (struct Recipe));
