@@ -23,7 +23,6 @@
 #define EMPTY_STRING "                                                                    "
 #define STATUS_POS_X 0
 #define STATUS_POS_Y 0
-#define STATUS_WAIT_TIME 1
 
 #include  "includes.h"
 #include <stdarg.h>
@@ -43,10 +42,9 @@ void status(const char* format, ...){
 	va_list args;
 	va_start(args, format);
 	vsprintf(buffer, format, args);
+	printy(STATUS_POS_X, STATUS_POS_Y, EMPTY_STRING);
 	printy(STATUS_POS_X, STATUS_POS_Y, "STATUS: %s", buffer);
 	va_end(args);
-	wait(STATUS_WAIT_TIME);
-	printy(STATUS_POS_X, STATUS_POS_Y, EMPTY_STRING);
 }
 
 // Priority functionality
