@@ -13,7 +13,7 @@ struct Scale{
     int id;
     OS_EVENT* semaphore;
     struct Components* components;
-    struct Point* infP;
+    struct Point infP;
 };
 
 struct FillScaleTaskOpts{
@@ -38,10 +38,6 @@ void fillScaleComponentTask(void* data){
     struct Scale* scale = opts->scale;
 
     while(1){
-        // if(isScaleComponentFull(opts)){
-        //     wait(1);
-        //     continue;
-        // }
         OSSemPend(scale->semaphore, 1, &err);
         if(err){
             wait(1);
@@ -80,12 +76,11 @@ void fill(int* a, const int* b){
     }
 }
 
-
 void displayScaleInfo(const struct Scale* scale, const struct Components* components){
-    printy(scale->infP->x, scale->infP->y, "[Scale %d]", scale->id);
-    printy(scale->infP->x, scale->infP->y + 1 , "[Component A]: %3d|%3d", scale->components->A, components->A);
-    printy(scale->infP->x, scale->infP->y + 2 , "[Component B: %3d|%3d", scale->components->B, components->B);
-    printy(scale->infP->x, scale->infP->y + 3, "[Component C: %3d|%3d", scale->components->C, components->C);
+    printy(scale->infP.x, scale->infP.y, "[Scale %d]", scale->id);
+    printy(scale->infP.x, scale->infP.y + 1 , "[Component A]: %3d|%3d", scale->components->A, components->A);
+    printy(scale->infP.x, scale->infP.y + 2 , "[Component B: %3d|%3d", scale->components->B, components->B);
+    printy(scale->infP.x, scale->infP.y + 3, "[Component C: %3d|%3d", scale->components->C, components->C);
 }  
 
 void displayFillingComponentInfo(const struct FillScaleTaskOpts* opts){

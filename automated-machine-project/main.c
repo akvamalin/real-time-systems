@@ -4,8 +4,6 @@
     Hochschule Merseburg
 */
 
-// INCLUDES
-///////////////////////////////////////////////////////////////////////////////////
 #include "../common.h"
 #include "scales.h"
 #include "mixer.h"
@@ -13,24 +11,17 @@
 #include "recipe.h"
 #include "water.h"
 
-// DEFINITIONS
-///////////////////////////////////////////////////////////////////////////////////
+
 #define MAX_BUFFER_SIZE 256
 #define TASK_STACK_SIZE 512
-
-// INITIAL TASK COORDINATES
 #define POS_X_INITIAL_TASK 35
 #define POS_Y_INITIAL_TASK 2
 #define COMPONENTS_COUNT 6
 #define RECIPE_PATH "recipe.txt"
 
-// FUNCTIONS DECLARATIONS
-///////////////////////////////////////////////////////////////////////////////////
 void initialTask(void* data);
 int calcTotalLoad(struct Recipe* recipe);
 
-// GLOBAL VARIABLES
-///////////////////////////////////////////////////////////////////////////////////
 OS_STK  initialTaskStack[TASK_STACK_SIZE], 
         watchTaskStack[TASK_STACK_SIZE], 
         fillScaleComponentA1TaskStack[TASK_STACK_SIZE],
@@ -46,8 +37,6 @@ OS_STK  initialTaskStack[TASK_STACK_SIZE],
         wateringTaskStack[TASK_STACK_SIZE],
         unloadMixerTaskStack[TASK_STACK_SIZE];        
 
-// MAIN ENTRY POINT
-///////////////////////////////////////////////////////////////////////////////////
 int main(void){
     setbuf(stdout, NULL);
     PC_DispClrScr(DISP_FGND_WHITE + DISP_BGND_GRAY);
@@ -59,15 +48,11 @@ int main(void){
     return 0;
 }
 
-// FUNCTIONS DEFINITIONS
-///////////////////////////////////////////////////////////////////////////////////
 void initialTask(void* data){    
     INT16S key;
     printy(POS_X_INITIAL_TASK, POS_Y_INITIAL_TASK, "[INITIAL TASK]: working...");
-    
-    // OMG
     // Sorry for this initialization code...
-    // I blame myself :(
+    // I blame myself for horrible designing :(
     struct Mixer* mixer = (struct Mixer*)malloc(sizeof(struct Mixer));
     mixer->load = 0;
     mixer->infP.x = 30;
@@ -80,19 +65,16 @@ void initialTask(void* data){
     scale1.semaphore = OSSemCreate(1);
     scale1.components = (struct Components*)malloc(sizeof(struct Components));
     scale1.components->A = scale1.components->B = scale1.components->C = 0;
-    scale1.infP = (struct Point*)malloc(sizeof(struct Point));
-    scale1.infP->x = 0;
-    scale1.infP->y = 9;
-    
+    scale1.infP.x = 0;
+    scale1.infP.y = 9;
     scale2.id = 2;
     scale2.semaphore = OSSemCreate(1);
     scale2.components = (struct Components*)malloc(sizeof(struct Components));
     scale2.components->A = scale2.components->B = scale2.components->C = 0;
-    scale2.infP = (struct Point*)malloc(sizeof(struct Point));
-    scale2.infP->x = 50;
-    scale2.infP->y = 9;
+    scale2.infP.x = 50;
+    scale2.infP.y = 9;
 
-    struct FillScaleTaskOpts a1, b1, c1;
+    struct FillScaleTaskOpts a1, b1, c1, a2, b2, c2;
     a1.componentName = 'A';
     a1.infP.x = 0;
     a1.infP.y = 4;
@@ -108,8 +90,6 @@ void initialTask(void* data){
     c1.scale = &scale1;
     c1.infP.x = 33;
     c1.infP.y = 4;
-
-    struct FillScaleTaskOpts a2, b2, c2;
     a2.componentName = 'A';
     a2.status = 0;
     a2.scale = &scale2;
@@ -172,7 +152,7 @@ void initialTask(void* data){
     unloadMixerOpts.infP.x = 30;
     unloadMixerOpts.infP.y = 19;
     unloadMixerOpts.nativeSemaphore = OSSemCreate(0);
-   // unloadMixerOpts.externalSemaphore = optsDry.nativeSemaphore;
+    unloadMixerOpts.externalSemaphore = NULL;
 
     optsWet.externalSemaphore = unloadMixerOpts.nativeSemaphore;
 
@@ -182,10 +162,6 @@ void initialTask(void* data){
                 status("Key ESC pressed");
                 exit(0);
             }
-            if(key == 'c'){
-                status("Key c pressed");
-                OSSemPost(optsDry.nativeSemaphore);
-            }
             if(key == KEY_SPACE){
                 status("Key SPACE pressed");
                 // Read recipe from a file
@@ -193,7 +169,7 @@ void initialTask(void* data){
                 status("Read recipe...");
                 recipe = readRecipe(RECIPE_PATH);
                 wopts.recipe = recipe;
-                status("Recipe has been read");
+                status("Recipe has been read!");
 
                 // set components volume limit
                 ///////////////////////////////////////////////////////////////////////////////////

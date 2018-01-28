@@ -17,12 +17,6 @@ void wateringTask(void* data){
     struct WaterTaskOpts* wopts = (struct WaterTaskOpts*)data;
     int wateringSince = 0;
     while(1){
-        // if(!isMixerFull(wopts->mixer)){
-        //     printy(wopts->infP.x, wopts->infP.y, "[Watering Task]");
-        //     printy(wopts->infP.x, wopts->infP.y + 1, "Status: waiting...");
-        //     wait(1);
-        //     continue;
-        // }
         OSSemPend(wopts->nativeSemaphore, 1, &err);
         if(err){
             printy(wopts->infP.x, wopts->infP.y, "[Watering Task]");
