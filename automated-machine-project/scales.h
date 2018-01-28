@@ -42,11 +42,10 @@ void fillScaleComponentTask(void* data){
         //     wait(1);
         //     continue;
         // }
-        OSSemPend(scale->semaphore, 0, &err);
+        OSSemPend(scale->semaphore, 1, &err);
         if(err){
-            printy(0, 1, "UNKNOWN ERROR! Terminating");
-            wait(5);
-            exit(1);
+            wait(1);
+            continue;
         }
         opts->status = 1;
         fillScaleComponent(opts);

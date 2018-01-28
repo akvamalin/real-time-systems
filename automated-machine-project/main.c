@@ -70,10 +70,9 @@ void initialTask(void* data){
     // I blame myself :(
     struct Mixer* mixer = (struct Mixer*)malloc(sizeof(struct Mixer));
     mixer->load = 0;
-    mixer->semaphore = OSSemCreate(1);
     mixer->infP.x = 30;
     mixer->infP.y = 12;
-    mixer->stage = DRY_MIXING;
+    mixer->semaphore = OSSemCreate(1);
 
     struct Recipe* recipe = NULL;
     struct Scale scale1, scale2;
@@ -138,7 +137,6 @@ void initialTask(void* data){
     struct FillMixerTaskOpts fillMixerOpts1, fillMixerOpts2;
     fillMixerOpts1.mixer = mixer;
     fillMixerOpts1.scale = &scale1;
-    
     fillMixerOpts2.mixer = mixer;
     fillMixerOpts2.scale = &scale2;
 
@@ -148,29 +146,45 @@ void initialTask(void* data){
     optsDry.infP.x = 0;
     optsDry.infP.y = 15;
     optsDry.mixingType = "dry";
+    optsDry.nativeSemaphore = OSSemCreate(0);
     optsWet.mixer = mixer;
     optsWet.mixingDuration = 4;
     optsWet.infP.x = 60;
     optsWet.infP.y = 15;
     optsWet.mixingType = "wet";
+    optsWet.nativeSemaphore = OSSemCreate(0);
+    
+    fillMixerOpts1.externalSemaphore = fillMixerOpts2.externalSemaphore =  optsDry.nativeSemaphore;
 
     struct WaterTaskOpts waterOpts;
     waterOpts.mixer = mixer;
     waterOpts.wateringDuration = 8;
     waterOpts.infP.x = 30;
     waterOpts.infP.y = 15;
+    waterOpts.nativeSemaphore = OSSemCreate(0);
+    waterOpts.externalSemaphore = optsWet.nativeSemaphore;
+
+    optsDry.externalSemaphore = waterOpts.nativeSemaphore;
 
     struct UnloadMixerTaskOpts unloadMixerOpts;
     unloadMixerOpts.mixer = mixer;
     unloadMixerOpts.unloadingDuration = 5;
     unloadMixerOpts.infP.x = 30;
     unloadMixerOpts.infP.y = 19;
+    unloadMixerOpts.nativeSemaphore = OSSemCreate(0);
+   // unloadMixerOpts.externalSemaphore = optsDry.nativeSemaphore;
+
+    optsWet.externalSemaphore = unloadMixerOpts.nativeSemaphore;
 
     while(1){
         if(PC_GetKey(&key)){
             if(key == KEY_ESC){
                 status("Key ESC pressed");
                 exit(0);
+            }
+            if(key == 'c'){
+                status("Key c pressed");
+                OSSemPost(optsDry.nativeSemaphore);
             }
             if(key == KEY_SPACE){
                 status("Key SPACE pressed");
@@ -180,7 +194,6 @@ void initialTask(void* data){
                 recipe = readRecipe(RECIPE_PATH);
                 wopts.recipe = recipe;
                 status("Recipe has been read");
-                status("Start fillScaleComponentTask for scale 1");
 
                 // set components volume limit
                 ///////////////////////////////////////////////////////////////////////////////////

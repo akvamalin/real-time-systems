@@ -4,25 +4,19 @@
 #include "../common.h"
 #include "scales.h"
 
-enum STAGE{
-    DRY_MIXING,
-    WATERING,
-    WET_MIXING,
-    UNLOADING
-};
-
 struct Mixer{
     int load;
     int loadLimit;
     OS_EVENT* semaphore;
     struct Point infP;
-    enum STAGE stage;
 };
 
 struct FillMixerTaskOpts{
     struct Scale* scale;
     struct Mixer* mixer;
     struct Components* limits;
+    OS_EVENT* nativeSemaphore;
+    OS_EVENT* externalSemaphore;
 };
 
 struct MixingTaskOpts{
@@ -30,12 +24,16 @@ struct MixingTaskOpts{
     struct Point infP;
     int mixingDuration;
     char* mixingType;
+    OS_EVENT* nativeSemaphore;
+    OS_EVENT* externalSemaphore;
 };
 
 struct UnloadMixerTaskOpts{
     struct Mixer* mixer;
     struct Point infP;
     int unloadingDuration;
+    OS_EVENT* nativeSemaphore;
+    OS_EVENT* externalSemaphore;
 };
 
 void mixingTask(void* data);
@@ -51,25 +49,26 @@ void unloadMixerTask(void* data){
     printy(mopts->infP.x, mopts->infP.y, "[Unloading Mixer Task]");
     printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
     while(1){
-        OSSemPend(mopts->mixer->semaphore, 0, &err);
+        OSSemPend(mopts->nativeSemaphore, 1, &err);
         if(err){
-            printy(0, 1, "UNKNOWN ERROR IN MIXINGTASK! Terminating");
-            wait(5);
-            exit(1);
-        }
-        if(mopts->mixer->load != mopts->mixer->loadLimit || mopts->mixer->stage != UNLOADING){
-            OSSemPost(mopts->mixer->semaphore);
+            printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
             wait(1);
             continue;
+        }
+        OSSemPend(mopts->mixer->semaphore, 0, &err);
+        if(err){
+            printy(0, 1, "A UNKNOWN ERROR in MIXER! Terminating");
+            wait(5);
+            exit(1);
         }
         printy(mopts->infP.x, mopts->infP.y + 1, "Status: working...");
         while(mopts->mixer->load != 0){
             mopts->mixer->load -= 10;
             wait(1);
         }
-        mopts->mixer->stage = DRY_MIXING;
         printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
         OSSemPost(mopts->mixer->semaphore);
+        OSSemPost(mopts->externalSemaphore);
     }
 }
 
@@ -78,25 +77,16 @@ void mixingTask(void* data){
     struct MixingTaskOpts* mopts = (struct MixingTaskOpts*)data;
     int mixingSince = 0;
     while(1){
-        OSSemPend(mopts->mixer->semaphore, 0, &err);
+        OSSemPend(mopts->nativeSemaphore, 1, &err);
         if(err){
-            printy(0, 1, "UNKNOWN ERROR IN MIXINGTASK! Terminating");
-            wait(5);
-            exit(1);
-        }
-        if(!isMixerFull(mopts->mixer)){
-            OSSemPost(mopts->mixer->semaphore);
             printy(mopts->infP.x, mopts->infP.y, "[Mixing %s Task]", mopts->mixingType);
             printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
             wait(1);
             continue;
         }
-        if(!strcmp(mopts->mixingType, "wet") && mopts->mixer->stage != WET_MIXING){
-            OSSemPost(mopts->mixer->semaphore);
-            wait(1);
-            continue;
-        }else if(!strcmp(mopts->mixingType, "dry") && mopts->mixer->stage != DRY_MIXING){
-            OSSemPost(mopts->mixer->semaphore);
+        if(!isMixerFull(mopts->mixer)){
+            printy(mopts->infP.x, mopts->infP.y, "[Mixing %s Task]", mopts->mixingType);
+            printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
             wait(1);
             continue;
         }
@@ -108,8 +98,7 @@ void mixingTask(void* data){
         }
         mixingSince = 0;
         printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
-        mopts->mixer->stage++;
-        OSSemPost(mopts->mixer->semaphore);
+        OSSemPost(mopts->externalSemaphore);
     }
 }
 
@@ -135,12 +124,17 @@ void fillMixerTask(void* data){
             exit(1);
         }
         if(opts->mixer->load >= opts->mixer->loadLimit){
+            OSSemPost(opts->mixer->semaphore);
+            OSSemPost(opts->scale->semaphore);
             wait(1);
             continue;
         }
         unloadComponent(&(opts->scale->components->A), &(opts->mixer->load));
         unloadComponent(&(opts->scale->components->B), &(opts->mixer->load));
         unloadComponent(&(opts->scale->components->C), &(opts->mixer->load));
+        if(opts->mixer->load >= opts->mixer->loadLimit){
+            OSSemPost(opts->externalSemaphore);   
+        }
         OSSemPost(opts->mixer->semaphore);
         OSSemPost(opts->scale->semaphore);
         wait(1);
