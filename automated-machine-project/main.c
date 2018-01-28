@@ -20,7 +20,7 @@
 
 // INITIAL TASK COORDINATES
 #define POS_X_INITIAL_TASK 35
-#define POS_Y_INITIAL_TASK 6
+#define POS_Y_INITIAL_TASK 2
 #define COMPONENTS_COUNT 6
 #define RECIPE_PATH "recipe.txt"
 
@@ -40,7 +40,9 @@ OS_STK  initialTaskStack[TASK_STACK_SIZE],
         fillScaleComponentB2TaskStack[TASK_STACK_SIZE],
         fillScaleComponentC2TaskStack[TASK_STACK_SIZE],
         fillMixerTask1Stack[TASK_STACK_SIZE],
-        fillMixerTask2Stack[TASK_STACK_SIZE];
+        fillMixerTask2Stack[TASK_STACK_SIZE],
+        mixingDryTaskStack[TASK_STACK_SIZE],
+        mixingWetTaskStack[TASK_STACK_SIZE];        
 
 // MAIN ENTRY POINT
 ///////////////////////////////////////////////////////////////////////////////////
@@ -48,10 +50,8 @@ int main(void){
     setbuf(stdout, NULL);
     PC_DispClrScr(DISP_FGND_WHITE + DISP_BGND_GRAY);
     OSInit();
-    print(30,  1, "uC/OS-II, The Real-Time Kernel");
-    print(32,  2, "Automated Machine Project");
-    print(34,  3, "Yevhenii Maliavka");
-    print(33,  4, "(press ESC to exit)");
+    print(30,  0, "uC/OS-II, The Real-Time Kernel / Yevhenii Maliavka");
+    print(32,  1, "Automated Machine Project (press ESC to exit)");
     createTask(initialTask, (void*)0, &initialTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
     OSStart();
     return 0;
@@ -68,10 +68,9 @@ void initialTask(void* data){
     // I blame myself :(
     struct Mixer* mixer = (struct Mixer*)malloc(sizeof(struct Mixer));
     mixer->load = 0;
-    mixer->status = 0;
     mixer->semaphore = OSSemCreate(1);
     mixer->infP.x = 30;
-    mixer->infP.y = 20;
+    mixer->infP.y = 12;
 
     struct Recipe* recipe = NULL;
     struct Scale scale1, scale2;
@@ -81,7 +80,7 @@ void initialTask(void* data){
     scale1.components->A = scale1.components->B = scale1.components->C = 0;
     scale1.infP = (struct Point*)malloc(sizeof(struct Point));
     scale1.infP->x = 0;
-    scale1.infP->y = 15;
+    scale1.infP->y = 9;
     
     scale2.id = 2;
     scale2.semaphore = OSSemCreate(1);
@@ -89,41 +88,41 @@ void initialTask(void* data){
     scale2.components->A = scale2.components->B = scale2.components->C = 0;
     scale2.infP = (struct Point*)malloc(sizeof(struct Point));
     scale2.infP->x = 50;
-    scale2.infP->y = 15;
+    scale2.infP->y = 9;
 
     struct FillScaleTaskOpts a1, b1, c1;
     a1.componentName = 'A';
     a1.infP.x = 0;
-    a1.infP.y = 10;
+    a1.infP.y = 4;
     a1.scale = &scale1;
     a1.status = 0;
     b1.componentName = 'B';
     b1.infP.x = 18;
-    b1.infP.y = 10;
+    b1.infP.y = 4;
     b1.status = 0;
     b1.scale = &scale1;
     c1.componentName = 'C';
     c1.status = 0;
     c1.scale = &scale1;
     c1.infP.x = 33;
-    c1.infP.y = 10;
+    c1.infP.y = 4;
 
     struct FillScaleTaskOpts a2, b2, c2;
     a2.componentName = 'A';
     a2.status = 0;
     a2.scale = &scale2;
     a2.infP.x = 48;
-    a2.infP.y = 10;
+    a2.infP.y = 4;
     b2.componentName = 'B';
     b2.status = 0;
     b2.scale = &scale2;
     b2.infP.x = 63;
-    b2.infP.y = 10;
+    b2.infP.y = 4;
     c2.componentName = 'C';
     c2.status = 0;
     c2.scale = &scale2;
     c2.infP.x = 78;
-    c2.infP.y = 10;
+    c2.infP.y = 4;
 
     struct WatchTaskOpts wopts;
     struct FillScaleTaskOpts* allOpts[COMPONENTS_COUNT] = {&a1, &b1, &c1, &a2, &b2, &c2};
@@ -140,6 +139,12 @@ void initialTask(void* data){
     fillMixerOpts2.mixer = mixer;
     fillMixerOpts2.scale = &scale2;
 
+    struct MixingTaskOpts optsDry, optsWet;
+    optsDry.mixer = mixer;
+    optsDry.mixingDuration = 4;
+    optsDry.infP.x = 0;
+    optsDry.infP.y = 15;
+    optsDry.mixingType = "dry";
     while(1){
         if(PC_GetKey(&key)){
             if(key == KEY_ESC){
@@ -166,14 +171,14 @@ void initialTask(void* data){
                 c2.componentLimit = recipe->weight2->C;
                 fillMixerOpts1.limits = recipe->weight1;
                 fillMixerOpts2.limits = recipe->weight2;
-                fillMixerOpts1.totalLoad = fillMixerOpts2.totalLoad = calcTotalLoad(recipe);
-
+                mixer->loadLimit = calcTotalLoad(recipe);
                 // Start watching task
                 ///////////////////////////////////////////////////////////////////////////////////
                 createTask(watchTask, (void*)&wopts, &watchTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
 
                 // Start fillin components tasks
                 ///////////////////////////////////////////////////////////////////////////////////
+                createTask(mixingTask, (void*)&optsDry, &mixingDryTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(fillMixerTask, (void*)&fillMixerOpts1, &fillMixerTask1Stack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(fillMixerTask, (void*)&fillMixerOpts2, &fillMixerTask2Stack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(fillScaleComponentTask, (void*)&a1, &fillScaleComponentA1TaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());

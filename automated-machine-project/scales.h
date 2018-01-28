@@ -40,18 +40,18 @@ void fillScaleComponentTask(void* data){
     while(1){
         if(isScaleComponentFull(opts)){
             status("Scale %d Component %c is fully loaded!", scale->id, opts->componentName);
-            opts->status = 0;
             wait(1);
             continue;
         }
-        opts->status = 1;
         OSSemPend(scale->semaphore, 0, &err);
         if(err){
             printy(0, 1, "UNKNOWN ERROR! Terminating");
+            wait(5);
             exit(1);
         }
         opts->status = 1;
         fillScaleComponent(opts);
+        opts->status = 0;
         OSSemPost(scale->semaphore);
         wait(1);
     }
