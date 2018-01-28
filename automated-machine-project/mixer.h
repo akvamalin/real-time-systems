@@ -4,11 +4,18 @@
 #include "../common.h"
 #include "scales.h"
 
+enum STAGE{
+    DRY_MIXING,
+    WATERING,
+    WET_MIXING
+};
+
 struct Mixer{
     int load;
     int loadLimit;
     OS_EVENT* semaphore;
     struct Point infP;
+    enum STAGE stage;
 };
 
 struct FillMixerTaskOpts{
@@ -38,8 +45,6 @@ void mixingTask(void* data){
         if(!isMixerFull(mopts->mixer)){
             printy(mopts->infP.x, mopts->infP.y, "[Mixing %s Task]", mopts->mixingType);
             printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
-            printy(mopts->infP.x, mopts->infP.y + 2, "Message: Mixer is not full");
-
             wait(1);
             continue;
         }
@@ -49,15 +54,24 @@ void mixingTask(void* data){
             wait(5);
             exit(1);
         }
+        if(!strcmp(mopts->mixingType, "wet") && mopts->mixer->stage != WET_MIXING){
+            OSSemPost(mopts->mixer->semaphore);
+            wait(1);
+            continue;
+        }else if(!strcmp(mopts->mixingType, "dry") && mopts->mixer->stage != DRY_MIXING){
+            OSSemPost(mopts->mixer->semaphore);
+            wait(1);
+            continue;
+        }
+
         printy(mopts->infP.x, mopts->infP.y + 1, "Status: working...");
         printy(mopts->infP.x, mopts->infP.y + 2, EMPTY_STRING);
-        printy(mopts->infP.x, mopts->infP.y + 2, "Message: %s mixing...", mopts->mixingType);
         while(mixingSince++ <= mopts->mixingDuration){
             wait(1);
         }
         mixingSince = 0;
         printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
-        printy(mopts->infP.x, mopts->infP.y + 2, "Message: %s mixing finished!", mopts->mixingType);
+        mopts->mixer->stage++;
         OSSemPost(mopts->mixer->semaphore);
     }
 }

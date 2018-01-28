@@ -39,7 +39,6 @@ void fillScaleComponentTask(void* data){
 
     while(1){
         if(isScaleComponentFull(opts)){
-            status("Scale %d Component %c is fully loaded!", scale->id, opts->componentName);
             wait(1);
             continue;
         }
@@ -78,7 +77,6 @@ void fillScaleComponent(const struct FillScaleTaskOpts* opts){
 void fill(int* a, const int* b){
     while(*a < *b){
         *a += 10;
-        status("FILLING: %d/%d", *a, *b);
         wait(1);
     }
 }

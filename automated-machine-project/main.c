@@ -11,7 +11,7 @@
 #include "mixer.h"
 #include "watch.h"
 #include "recipe.h"
-
+#include "water.h"
 
 // DEFINITIONS
 ///////////////////////////////////////////////////////////////////////////////////
@@ -42,7 +42,8 @@ OS_STK  initialTaskStack[TASK_STACK_SIZE],
         fillMixerTask1Stack[TASK_STACK_SIZE],
         fillMixerTask2Stack[TASK_STACK_SIZE],
         mixingDryTaskStack[TASK_STACK_SIZE],
-        mixingWetTaskStack[TASK_STACK_SIZE];        
+        mixingWetTaskStack[TASK_STACK_SIZE],
+        wateringTaskStack[TASK_STACK_SIZE];  
 
 // MAIN ENTRY POINT
 ///////////////////////////////////////////////////////////////////////////////////
@@ -71,6 +72,7 @@ void initialTask(void* data){
     mixer->semaphore = OSSemCreate(1);
     mixer->infP.x = 30;
     mixer->infP.y = 12;
+    mixer->stage = DRY_MIXING;
 
     struct Recipe* recipe = NULL;
     struct Scale scale1, scale2;
@@ -145,6 +147,19 @@ void initialTask(void* data){
     optsDry.infP.x = 0;
     optsDry.infP.y = 15;
     optsDry.mixingType = "dry";
+    optsWet.mixer = mixer;
+    optsWet.mixingDuration = 4;
+    optsWet.infP.x = 60;
+    optsWet.infP.y = 15;
+    optsWet.mixingType = "wet";
+
+    struct WaterTaskOpts waterOpts;
+    waterOpts.mixer = mixer;
+    waterOpts.wateringDuration = 8;
+    waterOpts.infP.x = 30;
+    waterOpts.infP.y = 15;
+
+
     while(1){
         if(PC_GetKey(&key)){
             if(key == KEY_ESC){
@@ -178,7 +193,10 @@ void initialTask(void* data){
 
                 // Start fillin components tasks
                 ///////////////////////////////////////////////////////////////////////////////////
+                // NOTE: the order of the tasks being created matters here. Be aware while changing the order!
                 createTask(mixingTask, (void*)&optsDry, &mixingDryTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
+                createTask(wateringTask, (void*)&waterOpts, &wateringTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
+                createTask(mixingTask, (void*)&optsWet, &mixingWetTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(fillMixerTask, (void*)&fillMixerOpts1, &fillMixerTask1Stack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(fillMixerTask, (void*)&fillMixerOpts2, &fillMixerTask2Stack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(fillScaleComponentTask, (void*)&a1, &fillScaleComponentA1TaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
