@@ -43,7 +43,8 @@ OS_STK  initialTaskStack[TASK_STACK_SIZE],
         fillMixerTask2Stack[TASK_STACK_SIZE],
         mixingDryTaskStack[TASK_STACK_SIZE],
         mixingWetTaskStack[TASK_STACK_SIZE],
-        wateringTaskStack[TASK_STACK_SIZE];  
+        wateringTaskStack[TASK_STACK_SIZE],
+        unloadMixerTaskStack[TASK_STACK_SIZE];        
 
 // MAIN ENTRY POINT
 ///////////////////////////////////////////////////////////////////////////////////
@@ -159,6 +160,11 @@ void initialTask(void* data){
     waterOpts.infP.x = 30;
     waterOpts.infP.y = 15;
 
+    struct UnloadMixerTaskOpts unloadMixerOpts;
+    unloadMixerOpts.mixer = mixer;
+    unloadMixerOpts.unloadingDuration = 5;
+    unloadMixerOpts.infP.x = 30;
+    unloadMixerOpts.infP.y = 19;
 
     while(1){
         if(PC_GetKey(&key)){
@@ -194,6 +200,7 @@ void initialTask(void* data){
                 // Start fillin components tasks
                 ///////////////////////////////////////////////////////////////////////////////////
                 // NOTE: the order of the tasks being created matters here. Be aware while changing the order!
+                createTask(unloadMixerTask, (void*)&unloadMixerOpts, &unloadMixerTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(mixingTask, (void*)&optsDry, &mixingDryTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(wateringTask, (void*)&waterOpts, &wateringTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());
                 createTask(mixingTask, (void*)&optsWet, &mixingWetTaskStack[TASK_STACK_SIZE - 1], getNextFreePrio());

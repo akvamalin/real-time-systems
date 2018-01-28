@@ -22,7 +22,7 @@
 #define print(x, y, msg) PC_DispStr(x, y, msg, DEFAULT_COLOUR)
 #define EMPTY_STRING "                                                                    "
 #define STATUS_POS_X 0
-#define STATUS_POS_Y 20
+#define STATUS_POS_Y 22
 
 #include  "includes.h"
 #include <stdarg.h>

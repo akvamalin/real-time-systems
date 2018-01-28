@@ -7,7 +7,8 @@
 enum STAGE{
     DRY_MIXING,
     WATERING,
-    WET_MIXING
+    WET_MIXING,
+    UNLOADING
 };
 
 struct Mixer{
@@ -31,28 +32,64 @@ struct MixingTaskOpts{
     char* mixingType;
 };
 
+struct UnloadMixerTaskOpts{
+    struct Mixer* mixer;
+    struct Point infP;
+    int unloadingDuration;
+};
+
 void mixingTask(void* data);
 void fillMixerTask(void* data);
 byte isMixerFull(const struct Mixer* mixer);
 void displayMixer(const struct Mixer* mixer, int total);
 void unloadComponent(int* source, int* destination);
+void unloadMixerTask(void* data);
+
+void unloadMixerTask(void* data){
+    UBYTE err;
+    struct UnloadMixerTaskOpts* mopts = (struct UnloadMixerTaskOpts*)data;
+    printy(mopts->infP.x, mopts->infP.y, "[Unloading Mixer Task]");
+    printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
+    while(1){
+        OSSemPend(mopts->mixer->semaphore, 0, &err);
+        if(err){
+            printy(0, 1, "UNKNOWN ERROR IN MIXINGTASK! Terminating");
+            wait(5);
+            exit(1);
+        }
+        if(mopts->mixer->load != mopts->mixer->loadLimit || mopts->mixer->stage != UNLOADING){
+            OSSemPost(mopts->mixer->semaphore);
+            wait(1);
+            continue;
+        }
+        printy(mopts->infP.x, mopts->infP.y + 1, "Status: working...");
+        while(mopts->mixer->load != 0){
+            mopts->mixer->load -= 10;
+            wait(1);
+        }
+        mopts->mixer->stage = DRY_MIXING;
+        printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
+        OSSemPost(mopts->mixer->semaphore);
+    }
+}
 
 void mixingTask(void* data){
     UBYTE err;
     struct MixingTaskOpts* mopts = (struct MixingTaskOpts*)data;
     int mixingSince = 0;
     while(1){
-        if(!isMixerFull(mopts->mixer)){
-            printy(mopts->infP.x, mopts->infP.y, "[Mixing %s Task]", mopts->mixingType);
-            printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
-            wait(1);
-            continue;
-        }
         OSSemPend(mopts->mixer->semaphore, 0, &err);
         if(err){
             printy(0, 1, "UNKNOWN ERROR IN MIXINGTASK! Terminating");
             wait(5);
             exit(1);
+        }
+        if(!isMixerFull(mopts->mixer)){
+            OSSemPost(mopts->mixer->semaphore);
+            printy(mopts->infP.x, mopts->infP.y, "[Mixing %s Task]", mopts->mixingType);
+            printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
+            wait(1);
+            continue;
         }
         if(!strcmp(mopts->mixingType, "wet") && mopts->mixer->stage != WET_MIXING){
             OSSemPost(mopts->mixer->semaphore);

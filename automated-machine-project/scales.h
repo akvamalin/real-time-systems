@@ -38,10 +38,10 @@ void fillScaleComponentTask(void* data){
     struct Scale* scale = opts->scale;
 
     while(1){
-        if(isScaleComponentFull(opts)){
-            wait(1);
-            continue;
-        }
+        // if(isScaleComponentFull(opts)){
+        //     wait(1);
+        //     continue;
+        // }
         OSSemPend(scale->semaphore, 0, &err);
         if(err){
             printy(0, 1, "UNKNOWN ERROR! Terminating");
