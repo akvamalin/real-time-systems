@@ -338,7 +338,7 @@ The recipe consists of:
 
 #### The Machine
 
-`image`
+![The Machine](waage.jpg)
 
 #### The process
 Filling the weighing machine with the components according to the recipe, emptying when requiered into the mixer (one after another).
