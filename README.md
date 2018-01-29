@@ -336,9 +336,30 @@ The recipe consists of:
 * dry mixing time
 * wet mixing time
 
+#### The Machine
+
+`image`
+
 #### The process
 Filling the weighing machine with the components according to the recipe, emptying when requiered into the mixer (one after another).
 `Mixer`: Requests to empty the weighing machine, performs dry mixing, requests adding water, performs wet mixing, performs emptying.
+
+1. User: presses the button [SPACE];
+2. App: read configuration (recipe);
+3. App: display configuration (recipe) in GUI;
+4. Machine: start;
+5. Scales: fill the components (self-sufficient from each other);
+    * Next fill happens only after unloading of scales;
+    * Unloading happens only after request from mixer;
+    * Ability of transfer...
+    * Capacity of scales...
+6. Scales: if both are full, then unloading one by one into mixer;
+7. Mixer: dry mixing;
+8. Faucet: fill mixer with water;
+9. Faucet: end of 18;
+10. Mixer: wet mixing;
+11. Mixer: end of 14;
+12. Mixer: unloading.
 
 #### Requirements
 * 1 Keyboard-Task to request the recie and start.
