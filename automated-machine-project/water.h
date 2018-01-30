@@ -24,6 +24,12 @@ void wateringTask(void* data){
             wait(1);
             continue;
         }
+        OSSemPend(wopts->mixer->semaphore, 0, &err);
+        if(err){
+            status("Error in watering task. Mixer semaphore is not available");
+            wait(5);
+            exit(1);
+        }
         printy(wopts->infP.x, wopts->infP.y + 1, "Status: working...");
         while(wateringSince++ <= wopts->wateringDuration){
             wait(1);

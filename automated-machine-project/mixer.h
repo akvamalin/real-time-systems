@@ -84,13 +84,6 @@ void mixingTask(void* data){
             wait(1);
             continue;
         }
-        if(!isMixerFull(mopts->mixer)){
-            printy(mopts->infP.x, mopts->infP.y, "[Mixing %s Task]", mopts->mixingType);
-            printy(mopts->infP.x, mopts->infP.y + 1, "Status: waiting...");
-            wait(1);
-            continue;
-        }
-
         printy(mopts->infP.x, mopts->infP.y + 1, "Status: working...");
         printy(mopts->infP.x, mopts->infP.y + 2, EMPTY_STRING);
         while(mixingSince++ <= mopts->mixingDuration){

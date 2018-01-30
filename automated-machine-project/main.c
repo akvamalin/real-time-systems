@@ -11,7 +11,6 @@
 #include "recipe.h"
 #include "water.h"
 
-
 #define MAX_BUFFER_SIZE 256
 #define TASK_STACK_SIZE 512
 #define POS_X_INITIAL_TASK 35
