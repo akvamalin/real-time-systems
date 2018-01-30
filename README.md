@@ -351,15 +351,16 @@ Filling the weighing machine with the components according to the recipe, emptyi
 5. `Scales:` fill the components (self-sufficient from each other);
     * Next fill happens only after unloading of scales;
     * Unloading happens only after request from mixer;
-    * Ability of transfer...
-    * Capacity of scales...
+    * No requirements for transfer ability;
+    * Capacity of scales always stores all of the 3 components;
 6. `Scales:` if both are full, then unloading one by one into mixer;
 7. `Mixer:` dry mixing;
 8. `Faucet:` fill mixer with water;
-9. `Faucet:` end of 18;
-10. `Mixer:` wet mixing;
-11. `Mixer:` end of 14;
-12. `Mixer:` unloading.
+9. `Mixer:` end of dry mixing;
+10. `Faucet:` end of watering duration;
+11. `Mixer:` wet mixing;
+12. `Mixer:` end of wet mixing;
+13. `Mixer:` unloading.
 
 #### Requirements
 * 1 Keyboard-Task to request the recie and start.
