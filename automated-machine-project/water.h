@@ -36,6 +36,7 @@ void wateringTask(void* data){
         }
         wateringSince = 0;
         printy(wopts->infP.x, wopts->infP.y + 1, "Status: waiting...");
+        OSSemPost(wopts->mixer->semaphore);
         OSSemPost(wopts->externalSemaphore);
     }
 }
