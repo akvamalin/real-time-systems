@@ -121,7 +121,6 @@ void initialTask(void* data){
 
     struct MixingTaskOpts optsDry, optsWet;
     optsDry.mixer = mixer;
-    optsDry.mixingDuration = 4;
     optsDry.infP.x = 0;
     optsDry.infP.y = 15;
     optsDry.mixingType = "dry";
@@ -137,7 +136,6 @@ void initialTask(void* data){
 
     struct WaterTaskOpts waterOpts;
     waterOpts.mixer = mixer;
-    waterOpts.wateringDuration = 8;
     waterOpts.infP.x = 30;
     waterOpts.infP.y = 15;
     waterOpts.nativeSemaphore = OSSemCreate(0);
@@ -169,6 +167,9 @@ void initialTask(void* data){
                 recipe = readRecipe(RECIPE_PATH);
                 wopts.recipe = recipe;
                 status("Recipe has been read!");
+                optsDry.mixingDuration = recipe->drymixDuration;
+                optsWet.mixingDuration = recipe->wetmixDuration;
+                waterOpts.wateringDuration = recipe->waterDuration;
 
                 // set components volume limit
                 ///////////////////////////////////////////////////////////////////////////////////
