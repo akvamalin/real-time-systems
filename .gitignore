@@ -9,7 +9,6 @@ micos/**/*.o
 micos/**/*.a
 micos/**/Makefile
 
-/*
 !/freertos/
 /freertos/*
 !/freertos/FreeRTOS
