@@ -79,5 +79,5 @@ Building and running the application should result into a loop printing the defi
 This template can now be used for different practical assignments.
 The project structure may look following in Visual Studio: 
 
- ![Project Structure](structure.PNG)
+ ![Project Structure](images/structure.PNG)
 

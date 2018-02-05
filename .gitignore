@@ -15,6 +15,7 @@ micos/**/Makefile
 /freertos/*
 !/freertos/FreeRTOS
 !/freertos/Readme.md
+!/freertos/images
 /freertos/FreeRTOS/*
 !/freertos/FreeRTOS/Demo
 /freertos/FreeRTOS/Demo/*
