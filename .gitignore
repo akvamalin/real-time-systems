@@ -18,7 +18,8 @@ micos/**/Makefile
 !/freertos/images
 /freertos/FreeRTOS/*
 !/freertos/FreeRTOS/Demo
-/freertos/FreeRTOS/Demo/*
+/freertos/FreeRTOS/Demo/Common
+/freertos/**/Debug
 !/freertos/FreeRTOS/Demo/Template
 /freertos/FreeRTOS/Demo/Template/Debug
 /freertos/FreeRTOS/Demo/Template/.vs
