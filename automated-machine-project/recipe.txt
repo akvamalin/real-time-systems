@@ -1,5 +1,0 @@
-weight1: 40, 60, 30
-weight2: 20, 20, 70
-water: 6
-drymix: 4
-wetmix: 6
