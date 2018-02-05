@@ -9,4 +9,13 @@ micos/**/*.o
 micos/**/*.a
 micos/**/Makefile
 
-**/*
+/*
+!/freertos/
+/freertos/*
+!/freertos/FreeRTOS
+/freertos/FreeRTOS/*
+!/freertos/FreeRTOS/Demo
+/freertos/FreeRTOS/Demo/*
+!/freertos/FreeRTOS/Demo/Template
+/freertos/FreeRTOS/Demo/Template/Debug
+/freertos/FreeRTOS/Demo/Template/.vs
