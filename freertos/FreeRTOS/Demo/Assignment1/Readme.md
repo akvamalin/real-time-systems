@@ -1,3 +1,8 @@
+# The Development of Real-Time Systems
+**Module:** The Principles of Scheduling
+
+**Assignee:** Yevhenii Maliavka
+
 ## Simple Tasks Scheduling
 > The objective of this assignment is to create two tasks and provide basic scheduling, learn basic FreeRTOS API.
 
