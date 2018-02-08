@@ -8,9 +8,7 @@ micos/**/*.dll
 micos/**/*.o
 micos/**/*.a
 micos/**/Makefile
-
 .vs
-
 !/freertos/
 /freertos/*
 !/freertos/FreeRTOS
