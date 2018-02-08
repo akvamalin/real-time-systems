@@ -7,9 +7,9 @@
 ### Note!
 This project does not includes source files of the FreeRTOS Kernel and its libs. If you want to start with a template right now, you must clone the `Template` and put it under the `FreeRTOS > Demo`. Then just open the project with Visual Studio, Build it and Run.
 
-## Step-by-step instructions
+### Step-by-step instructions
 
-### Installation
+#### Installation
 1. Download [Visual Studio Community Installer](https://www.visualstudio.com/de/vs/community/).
 2. Start Installer and select `Linux Development with C++` workload from the list of workloads.
 3. Install the IDE.
@@ -18,14 +18,14 @@ This project does not includes source files of the FreeRTOS Kernel and its libs.
 6. Build the solution and debug the program.
 The program should be running, however AFAIK there will be no output.
 
-### Target
+#### Target
 Create a `Hello World` project and remove all unnecessary/unused dependencies so that this project:
 * can be a base for the next projects.
 * the dependencies are included as they are needed.
 * the project is lightweight.
 * I know what including these or those dependencies mean.
 
-### Steps
+#### Steps
 1. Go to the `FreeRTOS > Demo`.
 2. Remove everything except `WIN32-MSVC` and `Common`.
 3. Rename `WIN32-MSVC` to `Template` (this will be eventually a template project to copy-n-paste).
@@ -81,3 +81,5 @@ The project structure may look following in Visual Studio:
 
  ![Project Structure](images/structure.PNG)
 
+## Coursera Assignments
+### [Assignment 1](FreeRTOS/Demo/Assignment1)
