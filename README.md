@@ -344,6 +344,10 @@ The recipe consists of:
 Filling the weighing machine with the components according to the recipe, emptying when requiered into the mixer (one after another).
 `Mixer`: Requests to empty the weighing machine, performs dry mixing, requests adding water, performs wet mixing, performs emptying.
 
+#### The process diagram
+
+![Process](diagram.jpg)
+
 1. `User:` presses the button [SPACE];
 2. `App:` read configuration (recipe);
 3. `App:` display configuration (recipe) in GUI;
