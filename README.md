@@ -346,7 +346,7 @@ Filling the weighing machine with the components according to the recipe, emptyi
 
 #### The process diagram
 
-![Process](diagram.jpg)
+![Process](diagram.png)
 
 1. `User:` presses the button [SPACE];
 2. `App:` read configuration (recipe);
