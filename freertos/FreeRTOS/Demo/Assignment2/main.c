@@ -88,6 +88,11 @@ void communicationTask() {
 	}
 }
 
+void vApplicationTickHook(void)
+{
+	printf("Hook\n");
+}
+
 // Entry Point
 int main() {
 	// xTaskCreate creates a new task and adds it to the list of tasks that are ready to run
@@ -97,8 +102,8 @@ int main() {
 	// NOTE! Low priority numbers denote low priority tasks
 
 	// Starts the RTOS scheduler. After calling the RTOS kernel has control over which tasks are executed and when.
-	TaskCreateSafe(matrixTask, "MatrixTask", configMINIMAL_STACK_SIZE * 20, NULL, 3, NULL);
-	TaskCreateSafe(communicationTask, "CommunicatioTask", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+	//TaskCreateSafe(matrixTask, "MatrixTask", configMINIMAL_STACK_SIZE * 20, NULL, 3, NULL);
+	//TaskCreateSafe(communicationTask, "CommunicatioTask", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 	vTaskStartScheduler();
 	return 0;
 }
@@ -121,3 +126,4 @@ BaseType_t TaskCreateSafe(
 	}
 	return status;
 }
+
