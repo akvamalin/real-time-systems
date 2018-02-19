@@ -6,7 +6,7 @@ There are two different ways and implementations that initially had different ca
 ## micos
 The `micos` directory contains general notes, description of several specific areas of real-time systems and implementations of practical assignments in context of using [MicroC/OS-II](https://de.wikipedia.org/wiki/MicroC/OS-II). The work represented under this directory is done within a Real-time Systems course at the University of Applied Science Merseburg. 
 
-Go directly to [my micos script](micos/README.md).
+Go directly to my [micos script](micos/Readme.md).
 
 **Note:** the contained script is quite unstructured und not complete, may contain misleading information and was not reviewed, the implementations do not follow the best coding practices and this repo may only be considered as a personal version control and hosting system.
 
