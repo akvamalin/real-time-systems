@@ -4,7 +4,27 @@ This is just a self-educational project that contains the implementation of the 
 
 This project is not the reference or tutorial, may contain errors and is not and doesn't target the "best-practices" implementation. It also contains some short informational snippets from Wikipedia to make a quick recap of the entities or mechanisms being used or implemented.
 
-## 1.1 TO DO: Describe the first task
+## General Target
+
+These praktical tasks are based on the information and examples from the MicroC/OS-II book (Jean J. Labrosse).
+
+The main purpose of these tasks is to: 
+* learn the functional mechanisms of the real-time kernel
+* create small own programs in the multitasking real-time environment.
+* test the CPU load of the real-time system.
+
+## Prerequisites
+
+The development occurs under the WIN32-PORT, that makes the usage of real-time MicroC OS under the Windows possible. It uses the free GCC Compiler that is used as a Cygwin Port.
+
+## 1.1 Multitasking Environment
+
+### Target
+The task is to program a multitasking application that consists of the following elements:
+* Statistics Task to show the usage of resources
+* Clock Task to show the date and time
+* Start Task that reads keyboard inputs and displays the values cyclic
+* 10 similar working tasks, each of them is represented with a animated status bar. The higher task number, the quicker the animation of status bars occurs.
 
 ## 1.2 Inter-task communication
 
@@ -157,7 +177,7 @@ The ways to solve the priority inversion problem could be:
     * use mutexes.
 
 ## Producer/Consumer problem
-**TODO**
+Read more on [Wikipedia](https://en.wikipedia.org/wiki/Producer%E2%80%93consumer_problem).
 
 ## Periodic Task Scheduling
 > Periodic - cyclic events, non-periodic - random events, e.g. user interrupts.
@@ -254,26 +274,17 @@ we could create a specific task for handling apperiodical tasks if there are som
     * We can interrupt - cancel. The interrupted task leaves an unconsVistent state.
     * We can let it become executed - we become a shift of all the tasks => domino effect. 
 
-## Round Robin Scheduling (Zeitscheibenverfahren) TSO Time Sharing Option (we must controll the time and the repeat intervals, requirements check)
-TODO: make a photo of the charts
+## Round Robin Scheduling
+> TSO Time Sharing Option (we must controll the time and the repeat intervals, requirements check)
 > More about [Round Robin on Wikipedia](https://en.wikipedia.org/wiki/Round-robin_scheduling)
 
 Every user becomes a timedisc. There are three options:
-1. Constant task time (like timeline scheduling).
+Constant task time (like timeline scheduling).
 * What happens if the task is not done in his own time-span(disk) and we have the next interrupt?
     ** As a primitive solution, we should plan our tasks to be really short to fit into that time disk.
     ** More overhead - we should interrupt for a specific time, and the next time the task starts it should continue on the interrupted place (we should save the values from the stack).
 * What happens if we have too many users and not enough time (say, 10 ms. for 10 users and 100 ms. overall time)?
     ** see the `constant overall time`.
-
-2. Constant overall time.
-TODO: ???????????????????????????????????????????????????????????????????????????
-
-
-
-3. Variable tasks time.
-TODO: 
-
 
 ## Static Priority Scheduling (Calculate who comes first)
 
