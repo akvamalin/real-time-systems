@@ -11,7 +11,7 @@ This project does not includes source files of the FreeRTOS Kernel and its libs.
 
 #### Installation
 1. Download [Visual Studio Community Installer](https://www.visualstudio.com/de/vs/community/).
-2. Start Installer and select `Linux Development with C++` workload from the list of workloads.
+2. Start Installer and select `Linux Development with C++` workload from the list of workloads. - (Optional)
 3. Install the IDE.
 4. Download and unzip [FreeRTOSV8.2.3](https://www.it.abo.fi/coursera/RTS/FreeRTOSV8.2.3.zip).
 5. Start the Visual Studio Community and Open the `Solution` under the `FreeRTOSV8.2.3 > FreeRTOS > Demo > WIN32-MSVC`.
@@ -34,18 +34,16 @@ Create a `Hello World` project and remove all unnecessary/unused dependencies so
 	* `configUSE_MALLOC_FAILED_HOOK` to 0.
 	* `configUSE_IDLE_HOOK`	to 0.
 	* `configUSE_TICK_HOOK` to 0.
-	* `configUSE_MALLOC_FAILED_HOOK` to	0.
-	* `configGENERATE_RUN_TIME_STATS` 0.
 	* Comment out:
 	```c
 	/* Run time stats gathering configuration options. */
-	unsigned long ulGetRunTimeCounterValue( void ); /* Prototype of function that returns run time counter. */
-	void vConfigureTimerForRunTimeStats( void );	/* Prototype of function that initialises the run time counter. */
-	#define configGENERATE_RUN_TIME_STATS			0
-	#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() vConfigureTimerForRunTimeStats()
-	#define portGET_RUN_TIME_COUNTER_VALUE() ulGetRunTimeCounterValue()
+	//unsigned long ulGetRunTimeCounterValue( void ); /* Prototype of function that returns run time counter. */
+	//void vConfigureTimerForRunTimeStats( void );	/* Prototype of function that initialises the run time counter. */
+	//#define configGENERATE_RUN_TIME_STATS			0
+	//#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() vConfigureTimerForRunTimeStats()
+	//#define portGET_RUN_TIME_COUNTER_VALUE() ulGetRunTimeCounterValue()
 	``` 
-5. Remove `trcConfig.h`, `Trace_Recorder_Configuration`, `Run-time-stats-utils.c`, `Trace.dump`.
+5. Remove `trcConfig.h`, `Trace_Recorder_Configuration`- (Optional), `Run-time-stats-utils.c`, `Trace.dump`- (Optional).
 6. Remove the `heap_5.c` from the `FreeRTOS Source > Source > Portable` and add `heap_1.c` that can be found under `FreeRTOS > Source > portable  > MemMang`. The files should be added using Visual Studio: right click on a folder, `Add Existing Item`. The original files can be still found using file explorer, AFAIK.
 Details about [Memory Management](https://www.freertos.org/a00111.html).
 7. Remove all `main***.c` files
